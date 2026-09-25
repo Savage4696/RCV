@@ -54,6 +54,7 @@ class InspectionContext:
     photos: dict[str, PhotoInput]
     obs: Observations
     threshold: float
+    sku_confirmed: bool = False
 
     @property
     def units_per_carton(self) -> int | None:
@@ -410,6 +411,7 @@ def check_quantity(ctx: InspectionContext) -> CheckResult:
         and cartons.count.all_visible
         and ctx.confident(cartons.count.confidence)
         and cartons.sealed is True
+        and ctx.sku_confirmed
         and (_label_upc(ctx) or ctx.units_per_carton)
     ):
         label = _label_upc(ctx)
@@ -485,13 +487,15 @@ def check_quantity(ctx: InspectionContext) -> CheckResult:
         reasons.append(f"unit count confidence {units.confidence:.2f} below threshold")
     if cartons.count.count is not None and cartons.sealed is not True:
         reasons.append("cartons not confirmed sealed, so carton-based count not used")
+    elif cartons.count.count is not None and not ctx.sku_confirmed:
+        reasons.append("product identity not confirmed, so carton contents cannot be assumed")
     observed_str = f">= {units.count}" if units.count is not None else None
     return CheckResult(
         check="quantity",
         verdict=Verdict.UNCERTAIN,
         expected=expected,
         observed=observed_str,
-        confidence=units.confidence or None,
+        confidence=(units.confidence or None) if units.count is not None else None,
         reason="Quantity cannot be verified: " + "; ".join(reasons),
         issues=[
             Issue(
@@ -867,7 +871,9 @@ def inspect(
         obs=clean,
         threshold=threshold,
     )
-    checks = [fn(ctx) for fn in CHECKS]
+    sku_result = check_sku(ctx)
+    ctx.sku_confirmed = sku_result.verdict == Verdict.PASS
+    checks = [sku_result, *(fn(ctx) for fn in CHECKS if fn is not check_sku)]
     decision, reason = decide(checks)
     report = InspectionReport(
         inspection_id=inspection_id or uuid.uuid4().hex[:12],

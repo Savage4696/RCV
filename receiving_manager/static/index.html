@@ -154,7 +154,7 @@ function updateSrcHint() {
   $("src-hint").textContent = manual
     ? "Observations must cite photo IDs (P1, P2...) that were actually uploaded; anything else is discarded."
     : health.vision_provider ? `Photos will be analysed by ${health.vision_provider}.`
-    : "No vision model configured (set OPENAI_API_KEY or ANTHROPIC_API_KEY). The result will be UNCERTAIN.";
+    : "No vision model configured (set OPENAI_API_KEY, OPENROUTER_API_KEY or ANTHROPIC_API_KEY). The result will be UNCERTAIN.";
 }
 
 $("run").onclick = async () => {

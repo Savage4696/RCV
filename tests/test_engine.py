@@ -124,3 +124,17 @@ def test_sku_not_on_po_raises():
         assert "not on purchase order" in str(exc)
     else:
         raise AssertionError("expected ValueError")
+
+
+def test_bare_integer_carton_count_is_coerced():
+    obs = Observations.model_validate({"cartons": {"count": 3}})
+    assert obs.cartons.count.count == 3 and obs.cartons.count.all_visible is None
+
+
+def test_carton_derived_quantity_requires_confirmed_sku():
+    def m(o):
+        o.identifiers = []
+
+    _, checks = run("06_crushed_carton", m)
+    assert checks["quantity"].verdict == Verdict.UNCERTAIN
+    assert "identity not confirmed" in checks["quantity"].reason

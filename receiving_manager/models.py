@@ -1,7 +1,7 @@
 from datetime import datetime
 from enum import Enum
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 # ---------------------------------------------------------------------------
 # Inputs: purchase order, catalogue, photos
@@ -99,6 +99,13 @@ class CartonObservation(BaseModel):
     units_per_carton_label_photo_ids: list[str] = Field(default_factory=list)
     units_per_carton_label_confidence: float = Field(default=0, ge=0, le=1)
     sealed: bool | None = None
+
+    @field_validator("count", mode="before")
+    @classmethod
+    def _coerce_bare_count(cls, value: object) -> object:
+        if value is None or isinstance(value, int):
+            return {"count": value}
+        return value
 
 
 class DamageFinding(BaseModel):

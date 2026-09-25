@@ -8,11 +8,21 @@ from .prompt import build_system_prompt, build_user_prompt
 
 
 class OpenAIProvider(VisionProvider):
-    def __init__(self, api_key: str, model: str, timeout: float = 120):
+    """OpenAI chat-completions API, also used for OpenAI-compatible gateways (OpenRouter)."""
+
+    def __init__(
+        self,
+        api_key: str,
+        model: str,
+        timeout: float = 120,
+        base_url: str = "https://api.openai.com/v1",
+        label: str = "openai",
+    ):
         self.api_key = api_key
         self.model = model
-        self.name = f"openai:{model}"
+        self.name = f"{label}:{model}"
         self.timeout = timeout
+        self.base_url = base_url.rstrip("/")
 
     def observe(
         self, line: POLine, catalog_item: CatalogItem | None, images: list[ImagePayload]
@@ -43,12 +53,16 @@ class OpenAIProvider(VisionProvider):
         }
         try:
             resp = httpx.post(
-                "https://api.openai.com/v1/chat/completions",
+                f"{self.base_url}/chat/completions",
                 headers={"Authorization": f"Bearer {self.api_key}"},
                 json=body,
                 timeout=self.timeout,
             )
             resp.raise_for_status()
         except httpx.HTTPError as exc:
-            raise VisionError(f"OpenAI request failed: {exc}") from exc
-        return parse_observations(resp.json()["choices"][0]["message"]["content"])
+            raise VisionError(f"{self.name} request failed: {exc}") from exc
+        try:
+            text = resp.json()["choices"][0]["message"]["content"]
+        except (KeyError, IndexError, TypeError, ValueError) as exc:
+            raise VisionError(f"{self.name} returned an unexpected response") from exc
+        return parse_observations(text or "")

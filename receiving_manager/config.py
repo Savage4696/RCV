@@ -8,6 +8,8 @@ class Settings:
     vision_provider: str
     openai_api_key: str | None
     openai_model: str
+    openrouter_api_key: str | None
+    openrouter_model: str
     anthropic_api_key: str | None
     anthropic_model: str
     confidence_threshold: float
@@ -16,12 +18,23 @@ class Settings:
 
 def load_settings() -> Settings:
     openai_key = os.environ.get("OPENAI_API_KEY") or None
+    openrouter_key = os.environ.get("OPENROUTER_API_KEY") or None
     anthropic_key = os.environ.get("ANTHROPIC_API_KEY") or None
-    default_provider = "openai" if openai_key else "anthropic" if anthropic_key else "none"
+    default_provider = (
+        "openai"
+        if openai_key
+        else "openrouter"
+        if openrouter_key
+        else "anthropic"
+        if anthropic_key
+        else "none"
+    )
     return Settings(
         vision_provider=os.environ.get("RM_VISION_PROVIDER", default_provider).lower(),
         openai_api_key=openai_key,
         openai_model=os.environ.get("RM_OPENAI_MODEL", "gpt-4o"),
+        openrouter_api_key=openrouter_key,
+        openrouter_model=os.environ.get("RM_OPENROUTER_MODEL", "openai/gpt-4o"),
         anthropic_api_key=anthropic_key,
         anthropic_model=os.environ.get("RM_ANTHROPIC_MODEL", "claude-3-5-sonnet-latest"),
         confidence_threshold=float(os.environ.get("RM_CONFIDENCE_THRESHOLD", "0.7")),

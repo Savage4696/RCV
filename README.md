@@ -61,7 +61,7 @@ Each check reports expected, observed, confidence, reason, issue codes and evide
 
 ```bash
 pip install -e ".[dev]"
-cp .env.example .env   # add OPENAI_API_KEY or ANTHROPIC_API_KEY
+cp .env.example .env   # add OPENAI_API_KEY, OPENROUTER_API_KEY or ANTHROPIC_API_KEY
 set -a; source .env; set +a
 ```
 
