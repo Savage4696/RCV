@@ -1,0 +1,117 @@
+{
+  "title": "Ambiguous evidence",
+  "description": "Distant, dark and blurry photos. Nothing can be confirmed or refuted.",
+  "purchase_order": {
+    "po_number": "PO-1001",
+    "supplier": "Acme Drinkware Ltd",
+    "lines": [
+      {
+        "sku": "BLUE-BOTTLE-001",
+        "expected_quantity": 24,
+        "variant": {
+          "color": "blue"
+        }
+      }
+    ]
+  },
+  "photos": [
+    "P1",
+    "P2"
+  ],
+  "observations": {
+    "photos": [
+      {
+        "photo_id": "P1",
+        "usable": true,
+        "shows": [
+          "pallet from a distance"
+        ],
+        "quality_issues": [
+          "far away",
+          "poor lighting"
+        ]
+      },
+      {
+        "photo_id": "P2",
+        "usable": false,
+        "shows": [
+          "label"
+        ],
+        "quality_issues": [
+          "motion blur, label illegible"
+        ]
+      }
+    ],
+    "identifiers": [
+      {
+        "kind": "sku",
+        "value": "BLUE-BOTTLE-00?",
+        "photo_ids": [
+          "P1"
+        ],
+        "confidence": 0.4
+      }
+    ],
+    "variant": {
+      "attributes": {
+        "color": "blue"
+      },
+      "photo_ids": [
+        "P1"
+      ],
+      "confidence": 0.55,
+      "notes": "Could be blue or teal under this lighting"
+    },
+    "units": {
+      "count": null,
+      "all_visible": false,
+      "photo_ids": [],
+      "confidence": 0
+    },
+    "cartons": {
+      "count": {
+        "count": 2,
+        "all_visible": false,
+        "photo_ids": [
+          "P1"
+        ],
+        "confidence": 0.6
+      },
+      "sealed": true
+    },
+    "damage": [
+      {
+        "type": "crush",
+        "target": "carton",
+        "description": "Possible dent on rear carton, shadowed",
+        "severity": "unknown",
+        "photo_ids": [
+          "P1"
+        ],
+        "confidence": 0.45
+      }
+    ],
+    "damage_coverage": "partial",
+    "components": [],
+    "other_issues": []
+  },
+  "expected": {
+    "decision": "UNCERTAIN",
+    "checks": {
+      "sku_identity": "UNCERTAIN",
+      "variant": "UNCERTAIN",
+      "quantity": "UNCERTAIN",
+      "carton_count": "UNCERTAIN",
+      "units_per_carton": "UNCERTAIN",
+      "damage": "UNCERTAIN",
+      "components": "UNCERTAIN",
+      "other_quality": "PASS"
+    },
+    "issue_codes": [
+      "SKU_UNVERIFIED",
+      "VARIANT_UNVERIFIED",
+      "QUANTITY_UNVERIFIED",
+      "POSSIBLE_DAMAGE"
+    ]
+  }
+}

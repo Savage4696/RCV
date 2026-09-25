@@ -1,0 +1,53 @@
+[
+  {
+    "sku": "BLUE-BOTTLE-001",
+    "name": "Insulated Water Bottle 750ml - Blue",
+    "asin": "B0BLUE0001",
+    "barcodes": [
+      "012345678905"
+    ],
+    "variant": {
+      "color": "blue"
+    },
+    "units_per_carton": 12,
+    "components": [
+      "bottle",
+      "lid"
+    ],
+    "description": "Stainless steel bottle, blue powder coat, black screw lid"
+  },
+  {
+    "sku": "RED-BOTTLE-001",
+    "name": "Insulated Water Bottle 750ml - Red",
+    "asin": "B0RED00001",
+    "barcodes": [
+      "012345678912"
+    ],
+    "variant": {
+      "color": "red"
+    },
+    "units_per_carton": 12,
+    "components": [
+      "bottle",
+      "lid"
+    ]
+  },
+  {
+    "sku": "LAMP-KIT-01",
+    "name": "LED Desk Lamp Kit",
+    "asin": "B0LAMP0001",
+    "barcodes": [
+      "098765432109"
+    ],
+    "variant": {
+      "color": "white"
+    },
+    "units_per_carton": 4,
+    "components": [
+      "lamp base",
+      "lamp arm",
+      "shade",
+      "power adapter"
+    ]
+  }
+]

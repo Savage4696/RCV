@@ -1,0 +1,117 @@
+{
+  "title": "Observations citing non-existent photos",
+  "description": "Only P1 was submitted, but most observations cite photos P7/P8 that do not exist. They are discarded rather than trusted.",
+  "purchase_order": {
+    "po_number": "PO-1001",
+    "supplier": "Acme Drinkware Ltd",
+    "lines": [
+      {
+        "sku": "BLUE-BOTTLE-001",
+        "expected_quantity": 24,
+        "variant": {
+          "color": "blue"
+        }
+      }
+    ]
+  },
+  "photos": [
+    "P1"
+  ],
+  "observations": {
+    "photos": [
+      {
+        "photo_id": "P1",
+        "usable": true
+      }
+    ],
+    "identifiers": [
+      {
+        "kind": "sku",
+        "value": "BLUE-BOTTLE-001",
+        "photo_ids": [
+          "P7"
+        ],
+        "confidence": 0.95
+      },
+      {
+        "kind": "barcode",
+        "value": "012345678905",
+        "photo_ids": [
+          "P7"
+        ],
+        "confidence": 0.9
+      }
+    ],
+    "variant": {
+      "attributes": {
+        "color": "blue"
+      },
+      "photo_ids": [
+        "P7"
+      ],
+      "confidence": 0.93
+    },
+    "units": {
+      "count": 24,
+      "all_visible": true,
+      "photo_ids": [
+        "P8"
+      ],
+      "confidence": 0.92
+    },
+    "cartons": {
+      "count": {
+        "count": 2,
+        "all_visible": true,
+        "photo_ids": [
+          "P1"
+        ],
+        "confidence": 0.95
+      },
+      "units_per_carton_label": 12,
+      "units_per_carton_label_photo_ids": [
+        "P7"
+      ],
+      "units_per_carton_label_confidence": 0.9,
+      "sealed": false
+    },
+    "damage": [],
+    "damage_coverage": "partial",
+    "components": [
+      {
+        "name": "bottle",
+        "present": true,
+        "photo_ids": [
+          "P8"
+        ],
+        "confidence": 0.92
+      },
+      {
+        "name": "lid",
+        "present": true,
+        "photo_ids": [
+          "P8"
+        ],
+        "confidence": 0.9
+      }
+    ],
+    "other_issues": []
+  },
+  "expected": {
+    "decision": "UNCERTAIN",
+    "checks": {
+      "sku_identity": "UNCERTAIN",
+      "variant": "UNCERTAIN",
+      "quantity": "UNCERTAIN",
+      "carton_count": "PASS",
+      "units_per_carton": "UNCERTAIN",
+      "damage": "UNCERTAIN",
+      "components": "UNCERTAIN",
+      "other_quality": "PASS"
+    },
+    "issue_codes": [
+      "SKU_UNVERIFIED",
+      "QUANTITY_UNVERIFIED"
+    ]
+  }
+}

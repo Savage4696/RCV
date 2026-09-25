@@ -1,0 +1,145 @@
+{
+  "title": "Missing components",
+  "description": "Lamp kit: one unit is missing its shade.",
+  "purchase_order": {
+    "po_number": "PO-2002",
+    "supplier": "Acme Drinkware Ltd",
+    "lines": [
+      {
+        "sku": "LAMP-KIT-01",
+        "expected_quantity": 4,
+        "variant": {
+          "color": "white"
+        }
+      }
+    ]
+  },
+  "photos": [
+    "P1",
+    "P2",
+    "P3"
+  ],
+  "observations": {
+    "photos": [
+      {
+        "photo_id": "P1",
+        "usable": true,
+        "shows": [
+          "pallet overview",
+          "carton exteriors"
+        ]
+      },
+      {
+        "photo_id": "P2",
+        "usable": true,
+        "shows": [
+          "carton label close-up"
+        ]
+      },
+      {
+        "photo_id": "P3",
+        "usable": true,
+        "shows": [
+          "opened cartons, all units laid out"
+        ]
+      }
+    ],
+    "identifiers": [
+      {
+        "kind": "sku",
+        "value": "LAMP-KIT-01",
+        "photo_ids": [
+          "P2"
+        ],
+        "confidence": 0.93
+      }
+    ],
+    "variant": {
+      "attributes": {
+        "color": "white"
+      },
+      "photo_ids": [
+        "P3"
+      ],
+      "confidence": 0.9
+    },
+    "units": {
+      "count": 4,
+      "all_visible": true,
+      "photo_ids": [
+        "P3"
+      ],
+      "confidence": 0.93
+    },
+    "cartons": {
+      "count": {
+        "count": 1,
+        "all_visible": true,
+        "photo_ids": [
+          "P1"
+        ],
+        "confidence": 0.97
+      },
+      "units_per_carton_label": 4,
+      "units_per_carton_label_photo_ids": [
+        "P2"
+      ],
+      "units_per_carton_label_confidence": 0.9,
+      "sealed": false
+    },
+    "damage": [],
+    "damage_coverage": "full",
+    "components": [
+      {
+        "name": "lamp base",
+        "present": true,
+        "photo_ids": [
+          "P3"
+        ],
+        "confidence": 0.9
+      },
+      {
+        "name": "lamp arm",
+        "present": true,
+        "photo_ids": [
+          "P3"
+        ],
+        "confidence": 0.9
+      },
+      {
+        "name": "shade",
+        "present": false,
+        "photo_ids": [
+          "P3"
+        ],
+        "confidence": 0.86,
+        "notes": "Unit 3 insert has an empty shade compartment"
+      },
+      {
+        "name": "power adapter",
+        "present": true,
+        "photo_ids": [
+          "P3"
+        ],
+        "confidence": 0.85
+      }
+    ],
+    "other_issues": []
+  },
+  "expected": {
+    "decision": "EXCEPTION",
+    "checks": {
+      "sku_identity": "PASS",
+      "variant": "PASS",
+      "quantity": "PASS",
+      "carton_count": "PASS",
+      "units_per_carton": "PASS",
+      "damage": "PASS",
+      "components": "FAIL",
+      "other_quality": "PASS"
+    },
+    "issue_codes": [
+      "MISSING_COMPONENT"
+    ]
+  }
+}

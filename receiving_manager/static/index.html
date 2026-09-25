@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Receiving Manager</title>
+<style>
+  :root { --pass:#15803d; --fail:#b91c1c; --unc:#b45309; --na:#6b7280; --bg:#f6f7f9; --card:#fff; --line:#e5e7eb; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background:var(--bg); color:#111827; }
+  header { background:#111827; color:#fff; padding:14px 24px; display:flex; align-items:center; gap:16px; }
+  header h1 { font-size:18px; margin:0; }
+  header .meta { font-size:12px; opacity:.75; margin-left:auto; }
+  main { display:grid; grid-template-columns: minmax(360px, 440px) 1fr; gap:20px; padding:20px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; margin-bottom:16px; }
+  .card h2 { font-size:14px; text-transform:uppercase; letter-spacing:.04em; color:#374151; margin:0 0 12px; }
+  label { display:block; font-size:12px; font-weight:600; color:#374151; margin:10px 0 4px; }
+  textarea { width:100%; font-family: ui-monospace, Menlo, monospace; font-size:12px; border:1px solid var(--line); border-radius:6px; padding:8px; min-height:110px; }
+  select, input[type=text] { width:100%; padding:7px; border:1px solid var(--line); border-radius:6px; }
+  button { background:#111827; color:#fff; border:0; border-radius:6px; padding:9px 14px; font-weight:600; cursor:pointer; }
+  button.secondary { background:#fff; color:#111827; border:1px solid var(--line); }
+  button:disabled { opacity:.5; cursor:default; }
+  .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .hint { font-size:12px; color:#6b7280; }
+  .thumbs { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
+  .thumbs figure { margin:0; text-align:center; font-size:11px; color:#374151; }
+  .thumbs img { width:88px; height:66px; object-fit:cover; border-radius:6px; border:1px solid var(--line); }
+  .decision { border-radius:10px; padding:16px 20px; color:#fff; display:flex; align-items:center; gap:16px; }
+  .decision .big { font-size:28px; font-weight:800; letter-spacing:.03em; }
+  .decision.ACCEPT { background:var(--pass); } .decision.EXCEPTION { background:var(--fail); } .decision.UNCERTAIN { background:var(--unc); }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  th, td { text-align:left; padding:8px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { font-size:11px; text-transform:uppercase; color:#6b7280; }
+  .badge { display:inline-block; font-size:11px; font-weight:700; padding:2px 8px; border-radius:999px; color:#fff; }
+  .PASS { background:var(--pass); } .FAIL { background:var(--fail); } .UNCERTAIN { background:var(--unc); } .NOT_APPLICABLE { background:var(--na); }
+  .ev { font-size:11px; color:#4b5563; margin-top:4px; }
+  .ev a { color:#1d4ed8; }
+  .issue { font-size:13px; padding:6px 0; border-bottom:1px dashed var(--line); }
+  .code { font-family: ui-monospace, monospace; font-size:11px; background:#f3f4f6; padding:1px 6px; border-radius:4px; }
+  .warn { color:var(--unc); font-size:12px; }
+  .history li { font-size:12px; cursor:pointer; padding:4px 0; }
+  .history li:hover { text-decoration:underline; }
+  pre { background:#0b1020; color:#d1d5db; padding:12px; border-radius:8px; overflow:auto; max-height:360px; font-size:11px; }
+  .empty { color:#6b7280; text-align:center; padding:60px 0; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Receiving Manager</h1>
+  <span class="hint" style="color:#9ca3af">Photo-based inbound inspection against the purchase order</span>
+  <span class="meta" id="meta"></span>
+</header>
+<main>
+  <section>
+    <div class="card">
+      <h2>1. Load a test scenario (optional)</h2>
+      <select id="scenario"><option value="">-- choose a scenario --</option></select>
+      <p class="hint" id="scenario-desc"></p>
+    </div>
+    <div class="card">
+      <h2>2. Purchase order &amp; catalogue</h2>
+      <label for="po">Purchase order (JSON)</label>
+      <textarea id="po" spellcheck="false"></textarea>
+      <label for="catalog">Product catalogue (JSON list)</label>
+      <textarea id="catalog" spellcheck="false"></textarea>
+      <label for="sku">PO line SKU to inspect (blank = first line)</label>
+      <input type="text" id="sku" placeholder="e.g. BLUE-BOTTLE-001">
+    </div>
+    <div class="card">
+      <h2>3. Receiving photos</h2>
+      <input type="file" id="photos" accept="image/*" multiple>
+      <p class="hint">Photos are numbered P1, P2, ... in upload order and hashed (SHA-256) into the evidence record.</p>
+      <div class="thumbs" id="thumbs"></div>
+    </div>
+    <div class="card">
+      <h2>4. Observations source</h2>
+      <div class="row"><label style="margin:0"><input type="radio" name="src" value="vision" checked> Analyse photos with vision model</label></div>
+      <div class="row"><label style="margin:0"><input type="radio" name="src" value="manual"> Use recorded observations (JSON)</label></div>
+      <textarea id="observations" spellcheck="false" style="display:none" placeholder="Observations JSON"></textarea>
+      <p class="hint" id="src-hint"></p>
+      <div class="row" style="margin-top:12px">
+        <button id="run">Run inspection</button>
+        <span class="hint" id="status"></span>
+      </div>
+    </div>
+    <div class="card">
+      <h2>History</h2>
+      <ul class="history" id="history" style="padding-left:18px;margin:0"></ul>
+    </div>
+  </section>
+  <section id="result"><div class="card empty">Run an inspection to see the decision and evidence record.</div></section>
+</main>
+<script>
+const $ = (id) => document.getElementById(id);
+let scenarios = [], catalog = [], health = {}, placeholderFiles = null;
+
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const pretty = (o) => JSON.stringify(o, null, 2);
+
+async function init() {
+  health = await (await fetch("/api/health")).json();
+  $("meta").textContent = `Vision: ${health.vision_provider || "not configured"} | confidence threshold ${health.confidence_threshold}`;
+  const data = await (await fetch("/api/scenarios")).json();
+  scenarios = data.scenarios; catalog = data.catalog;
+  for (const s of scenarios) $("scenario").add(new Option(`${s.title} (${s.name})`, s.name));
+  $("catalog").value = pretty(catalog);
+  $("po").value = pretty({po_number: "PO-1001", supplier: "Acme Drinkware Ltd",
+    lines: [{sku: "BLUE-BOTTLE-001", expected_quantity: 24, variant: {color: "blue"}}]});
+  updateSrcHint();
+  loadHistory();
+}
+
+function placeholderImage(label, sub) {
+  const c = document.createElement("canvas"); c.width = 400; c.height = 300;
+  const g = c.getContext("2d");
+  g.fillStyle = "#e5e7eb"; g.fillRect(0, 0, 400, 300);
+  g.fillStyle = "#374151"; g.font = "bold 40px sans-serif"; g.textAlign = "center";
+  g.fillText(label, 200, 140); g.font = "16px sans-serif"; g.fillText(sub, 200, 180);
+  g.fillText("(placeholder - scenario photo)", 200, 210);
+  return new Promise((res) => c.toBlob((b) => res(new File([b], `${label}.png`, {type: "image/png"})), "image/png"));
+}
+
+$("scenario").onchange = async () => {
+  const s = scenarios.find((x) => x.name === $("scenario").value);
+  if (!s) { $("scenario-desc").textContent = ""; placeholderFiles = null; renderThumbs(); return; }
+  $("scenario-desc").textContent = `${s.description} Expected decision: ${s.expected.decision}.`;
+  $("po").value = pretty(s.purchase_order);
+  $("catalog").value = pretty(catalog);
+  $("sku").value = "";
+  $("observations").value = pretty(s.observations);
+  document.querySelector('input[name=src][value=manual]').checked = true;
+  $("photos").value = "";
+  placeholderFiles = await Promise.all(s.photos.map((p) => placeholderImage(p, s.name)));
+  updateSrcHint(); renderThumbs();
+};
+
+$("photos").onchange = () => { placeholderFiles = null; renderThumbs(); };
+document.querySelectorAll('input[name=src]').forEach((r) => r.onchange = updateSrcHint);
+
+function currentFiles() { return $("photos").files.length ? [...$("photos").files] : (placeholderFiles || []); }
+
+function renderThumbs() {
+  $("thumbs").innerHTML = "";
+  currentFiles().forEach((f, i) => {
+    const fig = document.createElement("figure");
+    fig.innerHTML = `<img src="${URL.createObjectURL(f)}" alt="P${i + 1}"><figcaption>P${i + 1}</figcaption>`;
+    $("thumbs").appendChild(fig);
+  });
+}
+
+function updateSrcHint() {
+  const manual = document.querySelector('input[name=src]:checked').value === "manual";
+  $("observations").style.display = manual ? "block" : "none";
+  $("src-hint").textContent = manual
+    ? "Observations must cite photo IDs (P1, P2...) that were actually uploaded; anything else is discarded."
+    : health.vision_provider ? `Photos will be analysed by ${health.vision_provider}.`
+    : "No vision model configured (set OPENAI_API_KEY or ANTHROPIC_API_KEY). The result will be UNCERTAIN.";
+}
+
+$("run").onclick = async () => {
+  const fd = new FormData();
+  fd.append("purchase_order", $("po").value);
+  fd.append("catalog", $("catalog").value || "[]");
+  if ($("sku").value.trim()) fd.append("sku", $("sku").value.trim());
+  if (document.querySelector('input[name=src]:checked').value === "manual") fd.append("observations", $("observations").value);
+  currentFiles().forEach((f) => fd.append("photos", f, f.name));
+  $("run").disabled = true; $("status").textContent = "Inspecting...";
+  try {
+    const resp = await fetch("/api/inspections", {method: "POST", body: fd});
+    const body = await resp.json();
+    if (!resp.ok) throw new Error(typeof body.detail === "string" ? body.detail : pretty(body.detail));
+    render(body); loadHistory(); $("status").textContent = "";
+  } catch (e) { $("status").textContent = "Error: " + e.message; }
+  finally { $("run").disabled = false; }
+};
+
+async function loadHistory() {
+  const items = await (await fetch("/api/inspections")).json();
+  $("history").innerHTML = items.length ? "" : '<span class="hint">No inspections yet</span>';
+  for (const it of items.slice(0, 20)) {
+    const li = document.createElement("li");
+    li.innerHTML = `<span class="badge ${it.decision === "ACCEPT" ? "PASS" : it.decision === "EXCEPTION" ? "FAIL" : "UNCERTAIN"}">${it.decision}</span> ${esc(it.po_number)} / ${esc(it.sku)} <span class="hint">${new Date(it.created_at).toLocaleString()}</span>`;
+    li.onclick = async () => render(await (await fetch(`/api/inspections/${it.inspection_id}`)).json());
+    $("history").appendChild(li);
+  }
+}
+
+function fmt(v) { return v === null || v === undefined ? '<span class="hint">-</span>' : esc(v); }
+
+function render(rec) {
+  const r = rec.report, id = r.inspection_id;
+  const photoLink = (pid) => `<a href="/api/inspections/${id}/photos/${encodeURIComponent(pid)}" target="_blank">${esc(pid)}</a>`;
+  const rows = r.checks.map((c) => `
+    <tr>
+      <td><b>${esc(c.check)}</b></td>
+      <td><span class="badge ${c.verdict}">${c.verdict === "NOT_APPLICABLE" ? "N/A" : c.verdict}</span></td>
+      <td>${fmt(c.expected)}</td><td>${fmt(c.observed)}</td>
+      <td>${c.confidence == null ? fmt(null) : c.confidence.toFixed(2)}</td>
+      <td>${esc(c.reason)}${c.evidence.map((e) => `<div class="ev">${photoLink(e.photo_id)}: ${esc(e.detail)}</div>`).join("")}</td>
+    </tr>`).join("");
+  const issues = r.issues.length ? r.issues.map((i) => `<div class="issue"><span class="code">${esc(i.code)}</span> ${esc(i.description)} ${i.photo_ids.length ? '<span class="hint">[' + i.photo_ids.map(photoLink).join(", ") + "]</span>" : ""}</div>`).join("") : '<span class="hint">None</span>';
+  const photos = rec.photos.map((p) => `<figure><a href="/api/inspections/${id}/photos/${p.photo_id}" target="_blank"><img src="/api/inspections/${id}/photos/${p.photo_id}" alt="${esc(p.photo_id)}"></a><figcaption>${esc(p.photo_id)} <span class="hint" title="${p.sha256}">${p.sha256.slice(0, 10)}...</span></figcaption></figure>`).join("");
+  $("result").innerHTML = `
+    <div class="decision ${r.decision}"><div class="big">${r.decision}</div><div>${esc(r.decision_reason)}<div style="font-size:12px;opacity:.85;margin-top:4px">PO ${esc(r.po_number)} / SKU ${esc(r.sku)} / inspection ${id} / ${new Date(r.created_at).toLocaleString()} / source: ${esc(rec.observation_source)}</div></div></div>
+    <div class="card" style="margin-top:16px"><h2>Inspection results</h2>
+      <table><thead><tr><th>Check</th><th>Verdict</th><th>Expected</th><th>Observed</th><th>Conf.</th><th>Reason &amp; evidence</th></tr></thead><tbody>${rows}</tbody></table></div>
+    <div class="card"><h2>Detected issues</h2>${issues}
+      ${r.warnings.length ? '<h2 style="margin-top:14px">Warnings</h2>' + r.warnings.map((w) => `<div class="warn">${esc(w)}</div>`).join("") : ""}</div>
+    <div class="card"><h2>Evidence record</h2>
+      <div class="thumbs">${photos || '<span class="hint">No photos</span>'}</div>
+      <p class="hint">Record SHA-256: <span class="code">${rec.record_sha256}</span></p>
+      <div class="row"><button class="secondary" id="verify">Verify integrity</button><button class="secondary" id="download">Download JSON</button><span class="hint" id="verify-out"></span></div>
+      <details style="margin-top:10px"><summary class="hint">Raw record</summary><pre>${esc(pretty(rec))}</pre></details></div>`;
+  $("verify").onclick = async () => {
+    const v = await (await fetch(`/api/inspections/${id}/verify`)).json();
+    $("verify-out").textContent = v.valid ? "Record intact (hash matches)" : "HASH MISMATCH - record modified";
+  };
+  $("download").onclick = () => {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([pretty(rec)], {type: "application/json"}));
+    a.download = `evidence-${id}.json`; a.click();
+  };
+}
+
+init();
+</script>
+</body>
+</html>
