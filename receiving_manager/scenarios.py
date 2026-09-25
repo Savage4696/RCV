@@ -9,8 +9,9 @@ from pathlib import Path
 
 from pydantic import BaseModel, Field
 
+from .engine import inspect
 from .evidence import sha256_bytes
-from .models import CatalogItem, Observations, PhotoInput, PurchaseOrder
+from .models import CatalogItem, InspectionReport, Observations, PhotoInput, PurchaseOrder
 
 SCENARIO_DIR = Path(__file__).resolve().parent.parent / "scenarios"
 
@@ -54,3 +55,28 @@ def placeholder_photos(scenario: Scenario) -> list[PhotoInput]:
             )
         )
     return photos
+
+
+def evaluate(
+    scenario: Scenario, catalog: list[CatalogItem], threshold: float = 0.7
+) -> tuple[InspectionReport, list[str]]:
+    """Run a scenario through the rules; return the report and any mismatches vs. expected."""
+    report, _ = inspect(
+        scenario.purchase_order,
+        catalog,
+        placeholder_photos(scenario),
+        scenario.observations,
+        threshold=threshold,
+    )
+    verdicts = {c.check: c.verdict.value for c in report.checks}
+    codes = {i.code for i in report.issues}
+    mismatches = []
+    if report.decision.value != scenario.expected.decision:
+        mismatches.append(f"decision {report.decision.value} != {scenario.expected.decision}")
+    mismatches += [
+        f"{check} {verdicts.get(check)} != {verdict}"
+        for check, verdict in scenario.expected.checks.items()
+        if verdicts.get(check) != verdict
+    ]
+    mismatches += [f"missing issue {c}" for c in scenario.expected.issue_codes if c not in codes]
+    return report, mismatches

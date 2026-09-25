@@ -85,9 +85,18 @@ def test_reviewer_parses_review_and_filters_unknown_photos(monkeypatch):
 def test_review_can_only_escalate_accept():
     _, report, _ = report_for("01_correct_shipment")
     assert report.decision == Decision.ACCEPT
-    review = AIReview(model="m", summary="s", concerns=[ReviewConcern(description="thin")])
+    note = AIReview(model="m", summary="s", concerns=[ReviewConcern(description="minor note")])
+    apply_review(report, note)
+    assert report.decision == Decision.ACCEPT and not note.escalated
+    review = AIReview(
+        model="m",
+        summary="s",
+        concerns=[ReviewConcern(description="thin")],
+        agrees_with_decision=False,
+    )
     apply_review(report, review)
     assert report.decision == Decision.UNCERTAIN and review.escalated
+    assert "thin" in report.decision_reason
 
     _, report, _ = report_for("11_spec_example")
     review = AIReview(model="m", summary="s", agrees_with_decision=False)
@@ -97,3 +106,12 @@ def test_review_can_only_escalate_accept():
     _, report, _ = report_for("10_ambiguous")
     apply_review(report, AIReview(model="m", summary="looks fine", agrees_with_decision=True))
     assert report.decision == Decision.UNCERTAIN
+
+
+def test_missing_usage_cost_is_charged_at_estimate(monkeypatch):
+    response = FakeResponse('{"a": 1}')
+    response._data.pop("usage")
+    monkeypatch.setattr(llm.httpx, "post", lambda *a, **k: response)
+    budget = CreditBudget(api_key=None, base_url="x")
+    chat_completion("https://api.x/v1", "k", {"model": "m"}, budget=budget, estimate_usd=0.03)
+    assert budget.spent_usd == pytest.approx(0.03)

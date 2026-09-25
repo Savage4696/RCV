@@ -25,8 +25,11 @@ Rules:
   understands: what was expected, what the photos showed, and why that gives PASS/FAIL/UNCERTAIN.
 - UNCERTAIN is a correct, valid outcome when evidence is insufficient. Do not push it to PASS.
 - Raise a concern only for a concrete problem in the input: observations that contradict each
-  other, notes that mention something the checks ignored, or a PASS resting on thin evidence.
-  Set agrees_with_decision=false only if such a concern means the decision is not supported.
+  other, notes that mention a defect or discrepancy the checks ignored, or a PASS resting on thin
+  evidence. Cartons opened by the receiving operator for counting (sealed=false) are normal and
+  not a concern. Do not raise concerns about things outside the listed checks.
+- Set agrees_with_decision=false only if a concern means the decision is not supported by the
+  evidence (for ACCEPT this sends the shipment to manual review).
 - recommended_actions: short, concrete next steps for the receiving operator (e.g. "Photograph
   the label on carton 2", "Open carton 1 and count units", "Quarantine the damaged carton").
 - supplier_claim_draft: only for EXCEPTION, a short factual claim to the supplier listing each
@@ -132,11 +135,11 @@ class ReasoningReviewer:
 
 def apply_review(report: InspectionReport, review: AIReview) -> None:
     """The review can only escalate ACCEPT to UNCERTAIN, never relax a verdict."""
-    if report.decision == Decision.ACCEPT and (not review.agrees_with_decision or review.concerns):
+    if report.decision == Decision.ACCEPT and not review.agrees_with_decision:
         review.escalated = True
         concerns = "; ".join(c.description for c in review.concerns)
         report.decision = Decision.UNCERTAIN
         report.decision_reason = (
-            "All rule checks passed, but the reasoning reviewer raised concerns: "
-            f"{concerns or 'reviewer does not agree with ACCEPT'}. Manual review required"
+            "All rule checks passed, but the reasoning reviewer disputes ACCEPT: "
+            f"{concerns or 'no reason given'}. Manual review required"
         )

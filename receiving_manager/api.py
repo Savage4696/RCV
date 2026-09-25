@@ -7,10 +7,9 @@ from pydantic import TypeAdapter, ValidationError
 
 from . import definitions
 from .config import load_settings
-from .engine import inspect
 from .evidence import EvidenceStore, verify
 from .models import CatalogItem, EvidenceRecord, Observations, PurchaseOrder
-from .scenarios import SCENARIO_DIR, load_catalog, load_scenarios, placeholder_photos
+from .scenarios import SCENARIO_DIR, evaluate, load_catalog, load_scenarios
 from .service import UploadedPhoto, run_inspection
 from .vision import get_provider, get_reviewer, make_budget, make_cache
 
@@ -68,27 +67,17 @@ def benchmark() -> dict:
     catalog = load_catalog()
     rows = []
     for s in load_scenarios():
-        report, _ = inspect(
-            s.purchase_order,
-            catalog,
-            placeholder_photos(s),
-            s.observations,
-            threshold=settings.confidence_threshold,
-        )
-        verdicts = {c.check: c.verdict.value for c in report.checks}
-        codes = {i.code for i in report.issues}
-        check_ok = all(verdicts.get(k) == v for k, v in s.expected.checks.items())
+        report, mismatches = evaluate(s, catalog, settings.confidence_threshold)
         rows.append(
             {
                 "name": s.name,
                 "title": s.title,
                 "expected_decision": s.expected.decision,
                 "decision": report.decision.value,
-                "verdicts": verdicts,
-                "issue_codes": sorted(codes),
-                "passed": report.decision.value == s.expected.decision
-                and check_ok
-                and set(s.expected.issue_codes) <= codes,
+                "verdicts": {c.check: c.verdict.value for c in report.checks},
+                "issue_codes": sorted({i.code for i in report.issues}),
+                "mismatches": mismatches,
+                "passed": not mismatches,
             }
         )
     return {"total": len(rows), "passed": sum(r["passed"] for r in rows), "results": rows}

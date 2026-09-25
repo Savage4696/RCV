@@ -341,7 +341,7 @@ function render(rec) {
       ${conf}<div class="rsn">${esc(c.reason)}</div>${ex[c.check] ? `<div class="ai-x">${esc(ex[c.check])}</div>` : ""}<div class="evs">${evs}</div></div>`;
   }).join("");
   const ai = rv ? `<div class="card ai"><h2>Reasoning-model review · ${esc(rv.model)} <span class="hint" style="text-transform:none;letter-spacing:0">${rv.cached ? "cached, $0" : "$" + rv.cost_usd.toFixed(4)}</span></h2>
-      ${rv.escalated ? `<div class="esc">Reviewer raised concerns, so ACCEPT was escalated to UNCERTAIN for human review.</div>` : ""}
+      ${rv.escalated ? `<div class="esc">Reviewer disputes ACCEPT, so the shipment was escalated to UNCERTAIN for human review.</div>` : ""}
       <div class="sum">${esc(rv.summary)}</div>
       ${rv.concerns.length ? `<h2 style="margin-top:14px">Concerns</h2><ul>${rv.concerns.map((c) => `<li>${esc(c.description)} ${c.photo_ids.length ? `<span class="hint">[${c.photo_ids.join(", ")}]</span>` : ""}</li>`).join("")}</ul>` : ""}
       ${rv.recommended_actions.length ? `<h2 style="margin-top:14px">Recommended actions</h2><ul>${rv.recommended_actions.map((a) => `<li>${esc(a)}</li>`).join("")}</ul>` : ""}

@@ -70,6 +70,10 @@ class CreditBudget:
         }
 
     def ensure(self, estimate_usd: float) -> None:
+        with self._lock:
+            self._ensure(estimate_usd)
+
+    def _ensure(self, estimate_usd: float) -> None:
         if self.spent_usd + estimate_usd > self.max_spend_usd:
             raise BudgetExceeded(
                 f"Session spend cap reached (${self.spent_usd:.3f} of ${self.max_spend_usd:.2f}); "
@@ -154,7 +158,7 @@ def chat_completion(
     except (KeyError, IndexError, TypeError, ValueError) as exc:
         raise LLMError(f"{body['model']} returned an unexpected response") from exc
     usage = data.get("usage") or {}
-    cost = float(usage.get("cost") or 0.0)
+    cost = float(usage["cost"]) if usage.get("cost") is not None else estimate_usd
     if budget:
         budget.record(cost)
     result = ChatResult(
