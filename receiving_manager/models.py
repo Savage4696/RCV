@@ -201,10 +201,40 @@ class InspectionReport(BaseModel):
     confidence_threshold: float
 
 
+class CheckExplanation(BaseModel):
+    check: str
+    explanation: str
+
+
+class ReviewConcern(BaseModel):
+    description: str
+    checks: list[str] = Field(default_factory=list)
+    photo_ids: list[str] = Field(default_factory=list)
+
+
+class AIReview(BaseModel):
+    """Reasoning-model audit of a deterministic report.
+
+    The reviewer explains the rule outcomes and may raise concerns. It can never turn a FAIL or
+    UNCERTAIN into a PASS; a concern against an ACCEPT only escalates the decision to UNCERTAIN.
+    """
+
+    model: str
+    summary: str
+    check_explanations: list[CheckExplanation] = Field(default_factory=list)
+    concerns: list[ReviewConcern] = Field(default_factory=list)
+    recommended_actions: list[str] = Field(default_factory=list)
+    supplier_claim_draft: str | None = None
+    agrees_with_decision: bool = True
+    escalated: bool = False
+    cost_usd: float = 0.0
+    cached: bool = False
+
+
 class EvidenceRecord(BaseModel):
     """Self-contained, tamper-evident record of an inspection."""
 
-    schema_version: str = "1.0"
+    schema_version: str = "1.1"
     report: InspectionReport
     purchase_order: PurchaseOrder
     po_line: POLine
@@ -212,4 +242,6 @@ class EvidenceRecord(BaseModel):
     photos: list[PhotoInput]
     observations: Observations
     observation_source: str
+    ai_review: AIReview | None = None
+    llm_cost_usd: float = 0.0
     record_sha256: str | None = None

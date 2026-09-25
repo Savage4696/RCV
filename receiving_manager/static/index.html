@@ -3,223 +3,400 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Receiving Manager</title>
+<title>RCV · AI Receiving Manager</title>
 <style>
-  :root { --pass:#15803d; --fail:#b91c1c; --unc:#b45309; --na:#6b7280; --bg:#f6f7f9; --card:#fff; --line:#e5e7eb; }
-  * { box-sizing: border-box; }
-  body { margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; background:var(--bg); color:#111827; }
-  header { background:#111827; color:#fff; padding:14px 24px; display:flex; align-items:center; gap:16px; }
-  header h1 { font-size:18px; margin:0; }
-  header .meta { font-size:12px; opacity:.75; margin-left:auto; }
-  main { display:grid; grid-template-columns: minmax(360px, 440px) 1fr; gap:20px; padding:20px; }
-  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; margin-bottom:16px; }
-  .card h2 { font-size:14px; text-transform:uppercase; letter-spacing:.04em; color:#374151; margin:0 0 12px; }
-  label { display:block; font-size:12px; font-weight:600; color:#374151; margin:10px 0 4px; }
-  textarea { width:100%; font-family: ui-monospace, Menlo, monospace; font-size:12px; border:1px solid var(--line); border-radius:6px; padding:8px; min-height:110px; }
-  select, input[type=text] { width:100%; padding:7px; border:1px solid var(--line); border-radius:6px; }
-  button { background:#111827; color:#fff; border:0; border-radius:6px; padding:9px 14px; font-weight:600; cursor:pointer; }
-  button.secondary { background:#fff; color:#111827; border:1px solid var(--line); }
-  button:disabled { opacity:.5; cursor:default; }
-  .row { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
-  .hint { font-size:12px; color:#6b7280; }
-  .thumbs { display:flex; gap:8px; flex-wrap:wrap; margin-top:8px; }
-  .thumbs figure { margin:0; text-align:center; font-size:11px; color:#374151; }
-  .thumbs img { width:88px; height:66px; object-fit:cover; border-radius:6px; border:1px solid var(--line); }
-  .decision { border-radius:10px; padding:16px 20px; color:#fff; display:flex; align-items:center; gap:16px; }
-  .decision .big { font-size:28px; font-weight:800; letter-spacing:.03em; }
-  .decision.ACCEPT { background:var(--pass); } .decision.EXCEPTION { background:var(--fail); } .decision.UNCERTAIN { background:var(--unc); }
-  table { width:100%; border-collapse:collapse; font-size:13px; }
-  th, td { text-align:left; padding:8px; border-bottom:1px solid var(--line); vertical-align:top; }
-  th { font-size:11px; text-transform:uppercase; color:#6b7280; }
-  .badge { display:inline-block; font-size:11px; font-weight:700; padding:2px 8px; border-radius:999px; color:#fff; }
-  .PASS { background:var(--pass); } .FAIL { background:var(--fail); } .UNCERTAIN { background:var(--unc); } .NOT_APPLICABLE { background:var(--na); }
-  .ev { font-size:11px; color:#4b5563; margin-top:4px; }
-  .ev a { color:#1d4ed8; }
-  .issue { font-size:13px; padding:6px 0; border-bottom:1px dashed var(--line); }
-  .code { font-family: ui-monospace, monospace; font-size:11px; background:#f3f4f6; padding:1px 6px; border-radius:4px; }
-  .warn { color:var(--unc); font-size:12px; }
-  .history li { font-size:12px; cursor:pointer; padding:4px 0; }
-  .history li:hover { text-decoration:underline; }
-  pre { background:#0b1020; color:#d1d5db; padding:12px; border-radius:8px; overflow:auto; max-height:360px; font-size:11px; }
-  .empty { color:#6b7280; text-align:center; padding:60px 0; }
+:root{--pass:#16a34a;--pass-bg:#dcfce7;--fail:#dc2626;--fail-bg:#fee2e2;--unc:#d97706;--unc-bg:#fef3c7;--na:#6b7280;--na-bg:#f3f4f6;
+--ink:#0f172a;--muted:#64748b;--line:#e2e8f0;--bg:#f1f5f9;--card:#fff;--brand:#4f46e5;--brand2:#7c3aed}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:var(--bg);color:var(--ink);font-size:14px}
+header{background:linear-gradient(90deg,#0f172a,#1e1b4b);color:#fff;padding:12px 24px;display:flex;align-items:center;gap:18px;flex-wrap:wrap;position:sticky;top:0;z-index:10}
+.logo{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px;letter-spacing:.02em}
+.logo .mark{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--brand),var(--brand2));display:grid;place-items:center;font-size:15px}
+.logo small{display:block;font-weight:500;font-size:11px;opacity:.7;letter-spacing:0}
+nav{display:flex;gap:4px;margin-left:12px}
+nav button{background:transparent;color:#c7d2fe;border:0;padding:8px 14px;border-radius:8px;font-weight:600;cursor:pointer;font-size:13px}
+nav button.active,nav button:hover{background:rgba(255,255,255,.12);color:#fff}
+.chips{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.chip{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:999px;padding:4px 10px;font-size:11px;white-space:nowrap}
+.chip b{font-weight:700}
+.meter{width:90px;height:6px;background:rgba(255,255,255,.2);border-radius:9px;display:inline-block;vertical-align:middle;margin-left:6px;overflow:hidden}
+.meter i{display:block;height:100%;background:#4ade80}
+.page{display:none;padding:20px 24px;max-width:1500px;margin:0 auto}
+.page.active{display:block}
+.grid{display:grid;grid-template-columns:minmax(360px,460px) 1fr;gap:20px}
+@media(max-width:1000px){.grid{grid-template-columns:1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:16px;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+.card h2{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:0 0 12px;display:flex;align-items:center;gap:8px}
+.card h2 .n{background:var(--ink);color:#fff;width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:11px;letter-spacing:0}
+.scen-filter{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap}
+.pill{border:1px solid var(--line);background:#fff;border-radius:999px;padding:4px 10px;font-size:12px;cursor:pointer;font-weight:600;color:var(--muted)}
+.pill.active{background:var(--ink);color:#fff;border-color:var(--ink)}
+.scen-list{display:grid;grid-template-columns:1fr 1fr;gap:8px;max-height:300px;overflow:auto;padding-right:4px}
+.scen{border:1px solid var(--line);border-radius:10px;padding:8px 10px;cursor:pointer;background:#fff;transition:.15s}
+.scen:hover{border-color:var(--brand);box-shadow:0 0 0 3px #e0e7ff}
+.scen.sel{border-color:var(--brand);background:#eef2ff}
+.scen .t{font-weight:600;font-size:12.5px;line-height:1.25}
+.scen .d{font-size:11px;color:var(--muted);margin-top:4px}
+.dec{display:inline-block;font-size:10px;font-weight:800;letter-spacing:.04em;padding:2px 7px;border-radius:999px;margin-top:5px}
+.dec.ACCEPT,.v.PASS{background:var(--pass-bg);color:var(--pass)}
+.dec.EXCEPTION,.v.FAIL{background:var(--fail-bg);color:var(--fail)}
+.dec.UNCERTAIN,.v.UNCERTAIN{background:var(--unc-bg);color:var(--unc)}
+.v.NOT_APPLICABLE{background:var(--na-bg);color:var(--na)}
+.v{display:inline-block;font-size:11px;font-weight:800;padding:3px 9px;border-radius:999px;letter-spacing:.03em;cursor:help}
+.po-sum{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px}
+.kv{background:#f8fafc;border:1px solid var(--line);border-radius:8px;padding:6px 8px}
+.kv span{display:block;font-size:10px;text-transform:uppercase;color:var(--muted);letter-spacing:.05em}
+.kv b{font-size:13px;word-break:break-all}
+details>summary{cursor:pointer;color:var(--brand);font-size:12px;font-weight:600;margin:6px 0}
+label.f{display:block;font-size:11px;font-weight:700;color:var(--muted);margin:8px 0 4px;text-transform:uppercase;letter-spacing:.04em}
+textarea{width:100%;font-family:ui-monospace,Menlo,monospace;font-size:11.5px;border:1px solid var(--line);border-radius:8px;padding:8px;min-height:120px;background:#f8fafc}
+input[type=text]{width:100%;padding:7px 9px;border:1px solid var(--line);border-radius:8px}
+.drop{border:2px dashed #c7d2fe;border-radius:12px;padding:16px;text-align:center;color:var(--muted);cursor:pointer;background:#f8faff}
+.drop:hover,.drop.over{border-color:var(--brand);background:#eef2ff}
+.thumbs{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.thumbs figure{margin:0;text-align:center;font-size:11px;font-weight:700;color:var(--muted)}
+.thumbs img{width:96px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--line);display:block}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:6px;background:#f1f5f9;padding:4px;border-radius:10px}
+.seg label{padding:9px 8px;border-radius:8px;text-align:center;cursor:pointer;font-weight:600;font-size:12.5px;color:var(--muted)}
+.seg input{display:none}
+.seg label:has(input:checked){background:#fff;color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.seg small{display:block;font-weight:500;font-size:10.5px;margin-top:2px}
+.toggle{display:flex;align-items:center;gap:10px;margin-top:12px;padding:10px;border:1px solid var(--line);border-radius:10px}
+.toggle input{width:18px;height:18px;accent-color:var(--brand2)}
+.hint{font-size:12px;color:var(--muted)}
+button.primary{background:linear-gradient(135deg,var(--brand),var(--brand2));color:#fff;border:0;border-radius:10px;padding:12px 18px;font-weight:700;cursor:pointer;font-size:14px;width:100%;margin-top:12px}
+button.primary:disabled{opacity:.6;cursor:wait}
+button.sec{background:#fff;color:var(--ink);border:1px solid var(--line);border-radius:8px;padding:7px 12px;font-weight:600;cursor:pointer;font-size:12px}
+button.sec:hover{border-color:var(--brand)}
+.status{margin-top:8px;font-size:12px;color:var(--muted);min-height:16px}
+.status.err{color:var(--fail)}
+.hero{border-radius:16px;padding:20px 22px;color:#fff;display:grid;grid-template-columns:auto 1fr;gap:6px 22px;align-items:center;margin-bottom:16px}
+.hero.ACCEPT{background:linear-gradient(135deg,#15803d,#22c55e)}.hero.EXCEPTION{background:linear-gradient(135deg,#b91c1c,#ef4444)}.hero.UNCERTAIN{background:linear-gradient(135deg,#b45309,#f59e0b)}
+.hero .big{font-size:34px;font-weight:900;letter-spacing:.04em;grid-row:span 2}
+.hero .mean{font-weight:600;font-size:14px}
+.hero .why{font-size:13px;opacity:.95}
+.hero .meta{grid-column:1/-1;font-size:11px;opacity:.85;margin-top:6px}
+.tally{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.tally div{background:#fff;border:1px solid var(--line);border-radius:12px;padding:10px 12px;border-left:5px solid}
+.tally b{font-size:22px;display:block}.tally span{font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.05em}
+.checks{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:12px;margin-bottom:16px}
+.chk{background:#fff;border:1px solid var(--line);border-left:5px solid;border-radius:12px;padding:12px 14px}
+.chk.PASS{border-left-color:var(--pass)}.chk.FAIL{border-left-color:var(--fail)}.chk.UNCERTAIN{border-left-color:var(--unc)}.chk.NOT_APPLICABLE{border-left-color:var(--na);opacity:.75}
+.chk .hd{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.chk .nm{font-weight:700;font-size:13.5px;text-transform:capitalize}
+.eo{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:10px 0}
+.eo div{background:#f8fafc;border-radius:8px;padding:6px 8px;font-size:12px}
+.eo span{display:block;font-size:10px;color:var(--muted);text-transform:uppercase;font-weight:700;letter-spacing:.05em}
+.conf{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted)}
+.bar{position:relative;flex:1;height:7px;background:#e2e8f0;border-radius:9px}
+.bar i{position:absolute;left:0;top:0;bottom:0;border-radius:9px}
+.bar em{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ink)}
+.rsn{font-size:12.5px;margin-top:8px}
+.ai-x{font-size:12px;margin-top:8px;padding:8px;border-radius:8px;background:#f5f3ff;color:#4c1d95}
+.ai-x::before{content:"AI ";font-weight:800;font-size:10px;background:var(--brand2);color:#fff;padding:1px 5px;border-radius:4px;margin-right:4px}
+.evs{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.ev{display:flex;gap:6px;align-items:center;font-size:11px;background:#f1f5f9;border-radius:8px;padding:3px 6px 3px 3px;max-width:100%}
+.ev img{width:34px;height:24px;object-fit:cover;border-radius:5px}
+.ev a{color:var(--brand);font-weight:700;text-decoration:none}
+.ai{border:1px solid #ddd6fe;background:linear-gradient(180deg,#faf5ff,#fff)}
+.ai h2{color:#6d28d9}
+.ai .sum{font-size:14px;line-height:1.5}
+.ai ul{margin:6px 0 0;padding-left:18px}.ai li{margin:3px 0;font-size:13px}
+.claim{white-space:pre-wrap;background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px;font-size:12.5px}
+.esc{background:var(--unc-bg);color:#92400e;border-radius:8px;padding:8px 10px;font-size:12.5px;font-weight:600;margin:8px 0}
+.issue{display:flex;gap:8px;align-items:baseline;padding:6px 0;border-bottom:1px dashed var(--line);font-size:13px}
+.code{font-family:ui-monospace,monospace;font-size:11px;background:#f1f5f9;padding:2px 6px;border-radius:5px;font-weight:700}
+.warn{color:#92400e;font-size:12px;padding:3px 0}
+pre{background:#0b1020;color:#cbd5e1;padding:12px;border-radius:10px;overflow:auto;max-height:380px;font-size:11px}
+.empty{text-align:center;padding:70px 20px;color:var(--muted)}
+.empty .big{font-size:40px}
+.flow{display:flex;gap:6px;align-items:stretch;flex-wrap:wrap;margin-top:6px}
+.flow div{flex:1;min-width:120px;background:#f8fafc;border:1px solid var(--line);border-radius:10px;padding:10px;font-size:12px}
+.flow div b{display:block;font-size:12.5px;margin-bottom:3px}
+.flow .arrow{flex:0;min-width:0;border:0;background:none;display:grid;place-items:center;color:var(--muted);padding:0}
+.defs{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.def{border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff}
+.def p{margin:8px 0 0;font-size:13px;line-height:1.45}
+table{width:100%;border-collapse:collapse;font-size:12.5px}
+th,td{text-align:left;padding:8px;border-bottom:1px solid var(--line);vertical-align:middle}
+th{font-size:10.5px;text-transform:uppercase;color:var(--muted);letter-spacing:.05em}
+.mini{display:inline-block;width:14px;height:14px;border-radius:4px;margin-right:2px}
+.mini.PASS{background:var(--pass)}.mini.FAIL{background:var(--fail)}.mini.UNCERTAIN{background:var(--unc)}.mini.NOT_APPLICABLE{background:#cbd5e1}
+.score{font-size:40px;font-weight:900}
+.hist li{list-style:none;padding:8px 0;border-bottom:1px solid var(--line);cursor:pointer;display:flex;gap:10px;align-items:center}
+.hist li:hover{background:#f8fafc}
+.hist{padding:0;margin:0}
 </style>
 </head>
 <body>
 <header>
-  <h1>Receiving Manager</h1>
-  <span class="hint" style="color:#9ca3af">Photo-based inbound inspection against the purchase order</span>
-  <span class="meta" id="meta"></span>
+  <div class="logo"><div class="mark">RCV</div><div>AI Receiving Manager<small>Evidence-backed inbound inspection</small></div></div>
+  <nav>
+    <button data-page="inspect" class="active">Inspect</button>
+    <button data-page="bench">Scenario benchmark</button>
+    <button data-page="defs">How decisions work</button>
+    <button data-page="history">History</button>
+  </nav>
+  <div class="chips">
+    <span class="chip" id="chip-vision">Vision: -</span>
+    <span class="chip" id="chip-reason">Reasoning: -</span>
+    <span class="chip" id="chip-budget" title="OpenRouter credit. Calls are refused before the reserve is reached.">Credit: -</span>
+  </div>
 </header>
-<main>
-  <section>
+
+<section class="page active" id="page-inspect">
+ <div class="grid">
+  <div>
     <div class="card">
-      <h2>1. Load a test scenario (optional)</h2>
-      <select id="scenario"><option value="">-- choose a scenario --</option></select>
-      <p class="hint" id="scenario-desc"></p>
+      <h2><span class="n">1</span>Pick a sample shipment</h2>
+      <div class="scen-filter" id="scen-filter"></div>
+      <div class="scen-list" id="scen-list"></div>
     </div>
     <div class="card">
-      <h2>2. Purchase order &amp; catalogue</h2>
-      <label for="po">Purchase order (JSON)</label>
-      <textarea id="po" spellcheck="false"></textarea>
-      <label for="catalog">Product catalogue (JSON list)</label>
-      <textarea id="catalog" spellcheck="false"></textarea>
-      <label for="sku">PO line SKU to inspect (blank = first line)</label>
-      <input type="text" id="sku" placeholder="e.g. BLUE-BOTTLE-001">
+      <h2><span class="n">2</span>Purchase order &amp; catalogue</h2>
+      <div class="po-sum" id="po-sum"></div>
+      <details><summary>Edit purchase order / catalogue JSON</summary>
+        <label class="f" for="po">Purchase order</label><textarea id="po" spellcheck="false"></textarea>
+        <label class="f" for="catalog">Product catalogue</label><textarea id="catalog" spellcheck="false"></textarea>
+        <label class="f" for="sku">PO line SKU to inspect (blank = first line)</label><input type="text" id="sku" placeholder="e.g. BLUE-BOTTLE-001">
+      </details>
     </div>
     <div class="card">
-      <h2>3. Receiving photos</h2>
-      <input type="file" id="photos" accept="image/*" multiple>
-      <p class="hint">Photos are numbered P1, P2, ... in upload order and hashed (SHA-256) into the evidence record.</p>
+      <h2><span class="n">3</span>Receiving photos</h2>
+      <div class="drop" id="drop">Drop photos here or <b>click to upload</b><br><span class="hint">Numbered P1, P2... in order and SHA-256 hashed into the evidence record</span></div>
+      <input type="file" id="photos" accept="image/*" multiple hidden>
       <div class="thumbs" id="thumbs"></div>
     </div>
     <div class="card">
-      <h2>4. Observations source</h2>
-      <div class="row"><label style="margin:0"><input type="radio" name="src" value="vision" checked> Analyse photos with vision model</label></div>
-      <div class="row"><label style="margin:0"><input type="radio" name="src" value="manual"> Use recorded observations (JSON)</label></div>
-      <textarea id="observations" spellcheck="false" style="display:none" placeholder="Observations JSON"></textarea>
-      <p class="hint" id="src-hint"></p>
-      <div class="row" style="margin-top:12px">
-        <button id="run">Run inspection</button>
-        <span class="hint" id="status"></span>
+      <h2><span class="n">4</span>Analyse</h2>
+      <div class="seg">
+        <label><input type="radio" name="src" value="manual" checked>Recorded observations<small>Free · deterministic replay</small></label>
+        <label><input type="radio" name="src" value="vision">AI vision on photos<small id="vision-sub">uses credit</small></label>
       </div>
+      <details id="obs-wrap"><summary>View / edit recorded observations JSON</summary><textarea id="observations" spellcheck="false"></textarea></details>
+      <label class="toggle"><input type="checkbox" id="ai-review" checked><div><b>Reasoning-model review</b><div class="hint" id="reason-sub">Explains every verdict, recommends actions, drafts a supplier claim. Can only escalate, never overrule.</div></div></label>
+      <button class="primary" id="run">Run inspection</button>
+      <div class="status" id="status"></div>
     </div>
-    <div class="card">
-      <h2>History</h2>
-      <ul class="history" id="history" style="padding-left:18px;margin:0"></ul>
+  </div>
+  <div id="result"><div class="card empty"><div class="big">📦</div><p><b>Pick a sample shipment and run an inspection.</b></p><p class="hint">Each check returns PASS, FAIL or UNCERTAIN; the shipment gets ACCEPT, EXCEPTION or UNCERTAIN. See "How decisions work".</p></div></div>
+ </div>
+</section>
+
+<section class="page" id="page-bench">
+  <div class="card">
+    <h2>Scenario benchmark: rules engine vs expected outcome</h2>
+    <p class="hint">Runs every bundled scenario through the deterministic rules engine using its recorded observations. No model calls, no cost.</p>
+    <button class="sec" id="bench-run">Run all scenarios</button>
+    <div id="bench-out" style="margin-top:14px"></div>
+  </div>
+</section>
+
+<section class="page" id="page-defs">
+  <div class="card">
+    <h2>Pipeline</h2>
+    <div class="flow">
+      <div><b>1. Photos</b>Uploaded, numbered P1..Pn, SHA-256 hashed.</div><div class="arrow">→</div>
+      <div><b>2. Vision model</b>Reports only what it sees; every observation cites photo IDs and a confidence.</div><div class="arrow">→</div>
+      <div><b>3. Evidence filter</b>Drops observations citing missing or unusable photos, or below the confidence threshold.</div><div class="arrow">→</div>
+      <div><b>4. Rules engine</b>Deterministic PASS / FAIL / UNCERTAIN per check, then the shipment decision.</div><div class="arrow">→</div>
+      <div><b>5. Reasoning review</b>Explains, recommends and drafts a claim. Can only escalate ACCEPT to UNCERTAIN.</div><div class="arrow">→</div>
+      <div><b>6. Sealed record</b>Photos, observations, verdicts and review hashed into a tamper-evident record.</div>
     </div>
-  </section>
-  <section id="result"><div class="card empty">Run an inspection to see the decision and evidence record.</div></section>
-</main>
+  </div>
+  <div class="card"><h2>Check verdicts</h2><div class="defs" id="defs-verdicts"></div></div>
+  <div class="card"><h2>Shipment decisions</h2><div class="defs" id="defs-decisions"></div></div>
+  <div class="card"><h2>Checks performed</h2><div class="defs" id="defs-checks"></div></div>
+</section>
+
+<section class="page" id="page-history">
+  <div class="card"><h2>Inspection history</h2><ul class="hist" id="history"></ul></div>
+</section>
+
 <script>
 const $ = (id) => document.getElementById(id);
-let scenarios = [], catalog = [], health = {}, placeholderFiles = null;
-
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 const pretty = (o) => JSON.stringify(o, null, 2);
+const label = (s) => String(s).replace(/_/g, " ");
+let scenarios = [], catalog = [], health = {}, defs = {verdicts:{}, decisions:{}, checks:{}};
+let files = [], selected = null, filter = "ALL";
+
+document.querySelectorAll("nav button").forEach((b) => b.onclick = () => {
+  document.querySelectorAll("nav button").forEach((x) => x.classList.toggle("active", x === b));
+  document.querySelectorAll(".page").forEach((p) => p.classList.toggle("active", p.id === "page-" + b.dataset.page));
+  if (b.dataset.page === "history") loadHistory();
+});
 
 async function init() {
-  health = await (await fetch("/api/health")).json();
-  $("meta").textContent = `Vision: ${health.vision_provider || "not configured"} | confidence threshold ${health.confidence_threshold}`;
+  [health, defs] = await Promise.all([fetch("/api/health").then((r) => r.json()), fetch("/api/definitions").then((r) => r.json())]);
+  $("chip-vision").innerHTML = `Vision: <b>${esc(health.vision_provider || "not configured")}</b>`;
+  $("chip-reason").innerHTML = `Reasoning: <b>${esc(health.reasoning_model || "off")}</b>`;
+  $("vision-sub").textContent = health.vision_provider ? `${health.vision_provider.split(":").pop()} · uses credit` : "not configured";
+  if (!health.reasoning_model) { $("ai-review").checked = false; $("ai-review").disabled = true; $("reason-sub").textContent = "Set OPENROUTER_API_KEY to enable."; }
   const data = await (await fetch("/api/scenarios")).json();
   scenarios = data.scenarios; catalog = data.catalog;
-  for (const s of scenarios) $("scenario").add(new Option(`${s.title} (${s.name})`, s.name));
   $("catalog").value = pretty(catalog);
-  $("po").value = pretty({po_number: "PO-1001", supplier: "Acme Drinkware Ltd",
-    lines: [{sku: "BLUE-BOTTLE-001", expected_quantity: 24, variant: {color: "blue"}}]});
-  updateSrcHint();
-  loadHistory();
+  renderFilter(); renderScenarios(); renderDefs(); loadBudget();
+  await selectScenario(scenarios.find((s) => s.name.startsWith("11")) || scenarios[0]);
 }
 
-function placeholderImage(label, sub) {
-  const c = document.createElement("canvas"); c.width = 400; c.height = 300;
-  const g = c.getContext("2d");
-  g.fillStyle = "#e5e7eb"; g.fillRect(0, 0, 400, 300);
-  g.fillStyle = "#374151"; g.font = "bold 40px sans-serif"; g.textAlign = "center";
-  g.fillText(label, 200, 140); g.font = "16px sans-serif"; g.fillText(sub, 200, 180);
-  g.fillText("(placeholder - scenario photo)", 200, 210);
-  return new Promise((res) => c.toBlob((b) => res(new File([b], `${label}.png`, {type: "image/png"})), "image/png"));
+async function loadBudget() {
+  const b = await (await fetch("/api/budget")).json();
+  if (b.remaining_usd == null) { $("chip-budget").innerHTML = `Session spend: <b>$${b.session_spent_usd.toFixed(3)}</b> / cap $${b.session_cap_usd}`; return; }
+  const pct = Math.max(0, Math.min(100, 100 * b.remaining_usd / (b.limit_usd || 1)));
+  $("chip-budget").innerHTML = `Credit left: <b>$${b.remaining_usd.toFixed(2)}</b> of $${b.limit_usd} <span class="meter"><i style="width:${pct}%"></i></span> · session $${b.session_spent_usd.toFixed(3)} · cache hits ${b.cache_hits}`;
 }
 
-$("scenario").onchange = async () => {
-  const s = scenarios.find((x) => x.name === $("scenario").value);
-  if (!s) { $("scenario-desc").textContent = ""; placeholderFiles = null; renderThumbs(); return; }
-  $("scenario-desc").textContent = `${s.description} Expected decision: ${s.expected.decision}.`;
-  $("po").value = pretty(s.purchase_order);
-  $("catalog").value = pretty(catalog);
-  $("sku").value = "";
-  $("observations").value = pretty(s.observations);
+function renderFilter() {
+  $("scen-filter").innerHTML = ["ALL", "ACCEPT", "EXCEPTION", "UNCERTAIN"].map((f) =>
+    `<button class="pill ${f === filter ? "active" : ""}" data-f="${f}">${f === "ALL" ? "All" : f} (${f === "ALL" ? scenarios.length : scenarios.filter((s) => s.expected.decision === f).length})</button>`).join("");
+  $("scen-filter").querySelectorAll("button").forEach((b) => b.onclick = () => { filter = b.dataset.f; renderFilter(); renderScenarios(); });
+}
+
+function renderScenarios() {
+  $("scen-list").innerHTML = scenarios.filter((s) => filter === "ALL" || s.expected.decision === filter).map((s) =>
+    `<div class="scen ${selected && selected.name === s.name ? "sel" : ""}" data-n="${s.name}"><div class="t">${esc(s.title)}</div><div class="d">${esc(s.description.slice(0, 90))}${s.description.length > 90 ? "…" : ""}</div><span class="dec ${s.expected.decision}">expected ${s.expected.decision}</span></div>`).join("");
+  $("scen-list").querySelectorAll(".scen").forEach((el) => el.onclick = () => selectScenario(scenarios.find((s) => s.name === el.dataset.n)));
+}
+
+function placeholder(pid, name) {
+  const c = document.createElement("canvas"); c.width = 480; c.height = 320; const g = c.getContext("2d");
+  g.fillStyle = "#e2e8f0"; g.fillRect(0, 0, 480, 320); g.fillStyle = "#334155"; g.font = "bold 40px sans-serif"; g.textAlign = "center";
+  g.fillText(pid, 240, 160); g.font = "14px sans-serif"; g.fillText(name, 240, 190);
+  return new Promise((res) => c.toBlob((b) => res(new File([b], `${pid}.png`, {type: "image/png"}))));
+}
+
+async function selectScenario(s) {
+  selected = s; renderScenarios();
+  $("po").value = pretty(s.purchase_order); $("sku").value = ""; $("observations").value = pretty(s.observations);
   document.querySelector('input[name=src][value=manual]').checked = true;
-  $("photos").value = "";
-  placeholderFiles = await Promise.all(s.photos.map((p) => placeholderImage(p, s.name)));
-  updateSrcHint(); renderThumbs();
-};
+  files = await Promise.all(s.photos.map(async (pid) => {
+    const r = await fetch(`/api/scenarios/${s.name}/photos/${pid}`);
+    return r.ok ? new File([await r.blob()], `${pid}.png`, {type: "image/png"}) : placeholder(pid, s.name);
+  }));
+  renderPO(); renderThumbs(); $("status").textContent = s.description;
+}
 
-$("photos").onchange = () => { placeholderFiles = null; renderThumbs(); };
-document.querySelectorAll('input[name=src]').forEach((r) => r.onchange = updateSrcHint);
-
-function currentFiles() { return $("photos").files.length ? [...$("photos").files] : (placeholderFiles || []); }
+function renderPO() {
+  let po; try { po = JSON.parse($("po").value); } catch { $("po-sum").innerHTML = '<span class="hint">Invalid PO JSON</span>'; return; }
+  const line = po.lines?.find((l) => !$("sku").value.trim() || l.sku === $("sku").value.trim()) || po.lines?.[0] || {};
+  const v = Object.entries(line.variant || {}).map(([k, x]) => `${k}: ${x}`).join(", ") || "-";
+  $("po-sum").innerHTML = [["PO", po.po_number], ["SKU", line.sku], ["Qty", line.expected_quantity], ["Variant", v]].map(([k, x]) => `<div class="kv"><span>${k}</span><b>${esc(x ?? "-")}</b></div>`).join("");
+}
+$("po").oninput = renderPO; $("sku").oninput = renderPO;
 
 function renderThumbs() {
-  $("thumbs").innerHTML = "";
-  currentFiles().forEach((f, i) => {
-    const fig = document.createElement("figure");
-    fig.innerHTML = `<img src="${URL.createObjectURL(f)}" alt="P${i + 1}"><figcaption>P${i + 1}</figcaption>`;
-    $("thumbs").appendChild(fig);
-  });
+  $("thumbs").innerHTML = files.map((f, i) => `<figure><img src="${URL.createObjectURL(f)}" alt="P${i + 1}">P${i + 1}</figure>`).join("");
 }
-
-function updateSrcHint() {
-  const manual = document.querySelector('input[name=src]:checked').value === "manual";
-  $("observations").style.display = manual ? "block" : "none";
-  $("src-hint").textContent = manual
-    ? "Observations must cite photo IDs (P1, P2...) that were actually uploaded; anything else is discarded."
-    : health.vision_provider ? `Photos will be analysed by ${health.vision_provider}.`
-    : "No vision model configured (set OPENAI_API_KEY, OPENROUTER_API_KEY or ANTHROPIC_API_KEY). The result will be UNCERTAIN.";
+$("drop").onclick = () => $("photos").click();
+$("photos").onchange = () => setFiles([...$("photos").files]);
+["dragover", "dragenter"].forEach((e) => $("drop").addEventListener(e, (ev) => { ev.preventDefault(); $("drop").classList.add("over"); }));
+["dragleave", "drop"].forEach((e) => $("drop").addEventListener(e, () => $("drop").classList.remove("over")));
+$("drop").addEventListener("drop", (ev) => { ev.preventDefault(); setFiles([...ev.dataTransfer.files].filter((f) => f.type.startsWith("image/"))); });
+function setFiles(list) {
+  files = list; renderThumbs();
+  document.querySelector('input[name=src][value=vision]').checked = true;
+  $("status").textContent = "Own photos loaded: analysis switched to AI vision.";
 }
 
 $("run").onclick = async () => {
+  const vision = document.querySelector('input[name=src]:checked').value === "vision";
   const fd = new FormData();
   fd.append("purchase_order", $("po").value);
   fd.append("catalog", $("catalog").value || "[]");
   if ($("sku").value.trim()) fd.append("sku", $("sku").value.trim());
-  if (document.querySelector('input[name=src]:checked').value === "manual") fd.append("observations", $("observations").value);
-  currentFiles().forEach((f) => fd.append("photos", f, f.name));
-  $("run").disabled = true; $("status").textContent = "Inspecting...";
+  if (!vision) fd.append("observations", $("observations").value);
+  fd.append("ai_review", $("ai-review").checked ? "true" : "false");
+  files.forEach((f) => fd.append("photos", f, f.name));
+  $("run").disabled = true; $("status").className = "status";
+  $("status").textContent = (vision ? "Vision model is reading the photos" : "Applying rules") + ($("ai-review").checked ? ", then the reasoning model reviews…" : "…");
   try {
     const resp = await fetch("/api/inspections", {method: "POST", body: fd});
     const body = await resp.json();
     if (!resp.ok) throw new Error(typeof body.detail === "string" ? body.detail : pretty(body.detail));
-    render(body); loadHistory(); $("status").textContent = "";
-  } catch (e) { $("status").textContent = "Error: " + e.message; }
-  finally { $("run").disabled = false; }
+    render(body);
+    $("status").textContent = `Done · model cost $${(body.llm_cost_usd || 0).toFixed(4)}`;
+  } catch (e) { $("status").className = "status err"; $("status").textContent = "Error: " + e.message; }
+  finally { $("run").disabled = false; loadBudget(); }
+};
+
+const fmt = (v) => v === null || v === undefined || v === "" ? '<span class="hint">not observed</span>' : esc(v);
+const vbadge = (v) => `<span class="v ${v}" title="${esc(defs.verdicts[v] || "")}">${v === "NOT_APPLICABLE" ? "N/A" : v}</span>`;
+
+function render(rec) {
+  const r = rec.report, id = r.inspection_id, rv = rec.ai_review;
+  const purl = (pid) => `/api/inspections/${id}/photos/${encodeURIComponent(pid)}`;
+  const known = new Set(rec.photos.map((p) => p.photo_id));
+  const ex = Object.fromEntries((rv?.check_explanations || []).map((e) => [e.check, e.explanation]));
+  const count = (v) => r.checks.filter((c) => c.verdict === v).length;
+  const tally = [["PASS", "var(--pass)"], ["FAIL", "var(--fail)"], ["UNCERTAIN", "var(--unc)"], ["NOT_APPLICABLE", "var(--na)"]]
+    .map(([v, c]) => `<div style="border-left-color:${c}"><b style="color:${c}">${count(v)}</b><span>${v === "NOT_APPLICABLE" ? "N/A" : v}</span></div>`).join("");
+  const cards = r.checks.map((c) => {
+    const conf = c.confidence == null ? "" : `<div class="conf">confidence <div class="bar"><i style="width:${c.confidence * 100}%;background:${c.confidence >= r.confidence_threshold ? "var(--pass)" : "var(--unc)"}"></i><em style="left:${r.confidence_threshold * 100}%" title="threshold ${r.confidence_threshold}"></em></div><b>${c.confidence.toFixed(2)}</b></div>`;
+    const evs = c.evidence.map((e) => known.has(e.photo_id)
+      ? `<div class="ev"><a href="${purl(e.photo_id)}" target="_blank"><img src="${purl(e.photo_id)}"></a><span><a href="${purl(e.photo_id)}" target="_blank">${esc(e.photo_id)}</a> ${esc(e.detail)}</span></div>`
+      : `<div class="ev"><span><b>${esc(e.photo_id)}</b> ${esc(e.detail)}</span></div>`).join("");
+    return `<div class="chk ${c.verdict}"><div class="hd"><span class="nm" title="${esc(defs.checks[c.check] || "")}">${label(c.check)}</span>${vbadge(c.verdict)}</div>
+      ${c.verdict === "NOT_APPLICABLE" ? "" : `<div class="eo"><div><span>Expected</span>${fmt(c.expected)}</div><div><span>Observed</span>${fmt(c.observed)}</div></div>`}
+      ${conf}<div class="rsn">${esc(c.reason)}</div>${ex[c.check] ? `<div class="ai-x">${esc(ex[c.check])}</div>` : ""}<div class="evs">${evs}</div></div>`;
+  }).join("");
+  const ai = rv ? `<div class="card ai"><h2>Reasoning-model review · ${esc(rv.model)} <span class="hint" style="text-transform:none;letter-spacing:0">${rv.cached ? "cached, $0" : "$" + rv.cost_usd.toFixed(4)}</span></h2>
+      ${rv.escalated ? `<div class="esc">Reviewer raised concerns, so ACCEPT was escalated to UNCERTAIN for human review.</div>` : ""}
+      <div class="sum">${esc(rv.summary)}</div>
+      ${rv.concerns.length ? `<h2 style="margin-top:14px">Concerns</h2><ul>${rv.concerns.map((c) => `<li>${esc(c.description)} ${c.photo_ids.length ? `<span class="hint">[${c.photo_ids.join(", ")}]</span>` : ""}</li>`).join("")}</ul>` : ""}
+      ${rv.recommended_actions.length ? `<h2 style="margin-top:14px">Recommended actions</h2><ul>${rv.recommended_actions.map((a) => `<li>${esc(a)}</li>`).join("")}</ul>` : ""}
+      ${rv.supplier_claim_draft ? `<h2 style="margin-top:14px">Supplier claim draft <button class="sec" id="copy-claim" style="margin-left:auto">Copy</button></h2><div class="claim" id="claim">${esc(rv.supplier_claim_draft)}</div>` : ""}
+    </div>` : "";
+  const issues = r.issues.length ? r.issues.map((i) => `<div class="issue"><span class="code">${esc(i.code)}</span><span>${esc(i.description)} ${i.photo_ids.length ? `<span class="hint">[${i.photo_ids.join(", ")}]</span>` : ""}</span></div>`).join("") : '<span class="hint">No issues detected</span>';
+  const photos = rec.photos.map((p) => `<figure><a href="${purl(p.photo_id)}" target="_blank"><img src="${purl(p.photo_id)}"></a>${esc(p.photo_id)} <span class="hint" title="${p.sha256}">${p.sha256.slice(0, 8)}…</span></figure>`).join("");
+  $("result").innerHTML = `
+    <div class="hero ${r.decision}"><div class="big">${r.decision}</div><div class="mean">${esc(defs.decisions[r.decision] || "")}</div><div class="why">${esc(r.decision_reason)}</div>
+      <div class="meta">PO ${esc(r.po_number)} · SKU ${esc(r.sku)} · inspection ${id} · ${new Date(r.created_at).toLocaleString()} · observations: ${esc(rec.observation_source)} · threshold ${r.confidence_threshold}</div></div>
+    <div class="tally">${tally}</div>
+    ${ai}
+    <div class="checks">${cards}</div>
+    <div class="card"><h2>Detected issues</h2>${issues}${r.warnings.length ? '<h2 style="margin-top:14px">Evidence warnings</h2>' + r.warnings.map((w) => `<div class="warn">⚠ ${esc(w)}</div>`).join("") : ""}</div>
+    <div class="card"><h2>Evidence record</h2><div class="thumbs">${photos || '<span class="hint">No photos</span>'}</div>
+      <p class="hint">Record SHA-256 <span class="code">${rec.record_sha256}</span></p>
+      <div style="display:flex;gap:8px;align-items:center"><button class="sec" id="verify">Verify integrity</button><button class="sec" id="download">Download JSON</button><span class="hint" id="verify-out"></span></div>
+      <details><summary>Raw evidence record</summary><pre>${esc(pretty(rec))}</pre></details></div>`;
+  $("verify").onclick = async () => {
+    const v = await (await fetch(`/api/inspections/${id}/verify`)).json();
+    $("verify-out").innerHTML = v.valid ? '<b style="color:var(--pass)">Record intact: hash matches</b>' : '<b style="color:var(--fail)">HASH MISMATCH: record modified</b>';
+  };
+  $("download").onclick = () => { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([pretty(rec)], {type: "application/json"})); a.download = `evidence-${id}.json`; a.click(); };
+  if ($("copy-claim")) $("copy-claim").onclick = () => navigator.clipboard.writeText($("claim").textContent);
+  $("result").scrollIntoView({behavior: "smooth", block: "start"});
+}
+
+function renderDefs() {
+  const block = (obj, kind) => Object.entries(obj).map(([k, v]) => `<div class="def">${kind === "v" ? vbadge(k) : kind === "d" ? `<span class="dec ${k}" style="font-size:12px">${k}</span>` : `<b style="text-transform:capitalize">${label(k)}</b>`}<p>${esc(v)}</p></div>`).join("");
+  $("defs-verdicts").innerHTML = block(defs.verdicts, "v");
+  $("defs-decisions").innerHTML = block(defs.decisions, "d");
+  $("defs-checks").innerHTML = block(defs.checks, "c");
+}
+
+$("bench-run").onclick = async () => {
+  $("bench-out").innerHTML = '<span class="hint">Running…</span>';
+  const b = await (await fetch("/api/benchmark")).json();
+  const checks = Object.keys(b.results[0]?.verdicts || {});
+  $("bench-out").innerHTML = `<div style="display:flex;align-items:baseline;gap:12px"><span class="score" style="color:${b.passed === b.total ? "var(--pass)" : "var(--fail)"}">${b.passed}/${b.total}</span><span class="hint">scenarios produce exactly the expected decision, check verdicts and issue codes</span></div>
+    <p class="hint">Squares: ${checks.map(label).join(" · ")}</p>
+    <table><thead><tr><th>Scenario</th><th>Expected</th><th>Actual</th><th>Checks</th><th>Issue codes</th><th></th></tr></thead><tbody>
+    ${b.results.map((r) => `<tr><td><b>${esc(r.title)}</b><div class="hint">${esc(r.name)}</div></td><td><span class="dec ${r.expected_decision}">${r.expected_decision}</span></td><td><span class="dec ${r.decision}">${r.decision}</span></td>
+      <td>${checks.map((c) => `<span class="mini ${r.verdicts[c]}" title="${label(c)}: ${r.verdicts[c]}"></span>`).join("")}</td>
+      <td>${r.issue_codes.map((c) => `<span class="code">${esc(c)}</span>`).join(" ")}</td><td>${r.passed ? '<b style="color:var(--pass)">✓</b>' : '<b style="color:var(--fail)">✗</b>'}</td></tr>`).join("")}</tbody></table>`;
 };
 
 async function loadHistory() {
   const items = await (await fetch("/api/inspections")).json();
-  $("history").innerHTML = items.length ? "" : '<span class="hint">No inspections yet</span>';
-  for (const it of items.slice(0, 20)) {
+  $("history").innerHTML = items.length ? "" : '<li class="hint">No inspections yet</li>';
+  for (const it of items.slice(0, 50)) {
     const li = document.createElement("li");
-    li.innerHTML = `<span class="badge ${it.decision === "ACCEPT" ? "PASS" : it.decision === "EXCEPTION" ? "FAIL" : "UNCERTAIN"}">${it.decision}</span> ${esc(it.po_number)} / ${esc(it.sku)} <span class="hint">${new Date(it.created_at).toLocaleString()}</span>`;
-    li.onclick = async () => render(await (await fetch(`/api/inspections/${it.inspection_id}`)).json());
+    li.innerHTML = `<span class="dec ${it.decision}">${it.decision}</span><b>${esc(it.po_number)}</b> ${esc(it.sku)} <span class="hint" style="margin-left:auto">${new Date(it.created_at).toLocaleString()}</span>`;
+    li.onclick = async () => { render(await (await fetch(`/api/inspections/${it.inspection_id}`)).json()); document.querySelector('nav button[data-page=inspect]').click(); };
     $("history").appendChild(li);
   }
-}
-
-function fmt(v) { return v === null || v === undefined ? '<span class="hint">-</span>' : esc(v); }
-
-function render(rec) {
-  const r = rec.report, id = r.inspection_id;
-  const photoLink = (pid) => `<a href="/api/inspections/${id}/photos/${encodeURIComponent(pid)}" target="_blank">${esc(pid)}</a>`;
-  const rows = r.checks.map((c) => `
-    <tr>
-      <td><b>${esc(c.check)}</b></td>
-      <td><span class="badge ${c.verdict}">${c.verdict === "NOT_APPLICABLE" ? "N/A" : c.verdict}</span></td>
-      <td>${fmt(c.expected)}</td><td>${fmt(c.observed)}</td>
-      <td>${c.confidence == null ? fmt(null) : c.confidence.toFixed(2)}</td>
-      <td>${esc(c.reason)}${c.evidence.map((e) => `<div class="ev">${photoLink(e.photo_id)}: ${esc(e.detail)}</div>`).join("")}</td>
-    </tr>`).join("");
-  const issues = r.issues.length ? r.issues.map((i) => `<div class="issue"><span class="code">${esc(i.code)}</span> ${esc(i.description)} ${i.photo_ids.length ? '<span class="hint">[' + i.photo_ids.map(photoLink).join(", ") + "]</span>" : ""}</div>`).join("") : '<span class="hint">None</span>';
-  const photos = rec.photos.map((p) => `<figure><a href="/api/inspections/${id}/photos/${p.photo_id}" target="_blank"><img src="/api/inspections/${id}/photos/${p.photo_id}" alt="${esc(p.photo_id)}"></a><figcaption>${esc(p.photo_id)} <span class="hint" title="${p.sha256}">${p.sha256.slice(0, 10)}...</span></figcaption></figure>`).join("");
-  $("result").innerHTML = `
-    <div class="decision ${r.decision}"><div class="big">${r.decision}</div><div>${esc(r.decision_reason)}<div style="font-size:12px;opacity:.85;margin-top:4px">PO ${esc(r.po_number)} / SKU ${esc(r.sku)} / inspection ${id} / ${new Date(r.created_at).toLocaleString()} / source: ${esc(rec.observation_source)}</div></div></div>
-    <div class="card" style="margin-top:16px"><h2>Inspection results</h2>
-      <table><thead><tr><th>Check</th><th>Verdict</th><th>Expected</th><th>Observed</th><th>Conf.</th><th>Reason &amp; evidence</th></tr></thead><tbody>${rows}</tbody></table></div>
-    <div class="card"><h2>Detected issues</h2>${issues}
-      ${r.warnings.length ? '<h2 style="margin-top:14px">Warnings</h2>' + r.warnings.map((w) => `<div class="warn">${esc(w)}</div>`).join("") : ""}</div>
-    <div class="card"><h2>Evidence record</h2>
-      <div class="thumbs">${photos || '<span class="hint">No photos</span>'}</div>
-      <p class="hint">Record SHA-256: <span class="code">${rec.record_sha256}</span></p>
-      <div class="row"><button class="secondary" id="verify">Verify integrity</button><button class="secondary" id="download">Download JSON</button><span class="hint" id="verify-out"></span></div>
-      <details style="margin-top:10px"><summary class="hint">Raw record</summary><pre>${esc(pretty(rec))}</pre></details></div>`;
-  $("verify").onclick = async () => {
-    const v = await (await fetch(`/api/inspections/${id}/verify`)).json();
-    $("verify-out").textContent = v.valid ? "Record intact (hash matches)" : "HASH MISMATCH - record modified";
-  };
-  $("download").onclick = () => {
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(new Blob([pretty(rec)], {type: "application/json"}));
-    a.download = `evidence-${id}.json`; a.click();
-  };
 }
 
 init();

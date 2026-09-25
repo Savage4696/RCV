@@ -5,6 +5,7 @@ from dataclasses import dataclass
 
 from pydantic import ValidationError
 
+from ..llm import ChatResult
 from ..models import CatalogItem, Observations, POLine
 
 
@@ -21,6 +22,7 @@ class ImagePayload:
 
 class VisionProvider(ABC):
     name: str
+    last_call: ChatResult | None = None
 
     @abstractmethod
     def observe(

@@ -19,12 +19,40 @@ PO + catalogue ─────────────────────�
                                                    ▼
                           deterministic rules engine ──► checks ──► decision
                                                    ▼
+                          reasoning model (OpenRouter, default openai/gpt-5-mini): explains every
+                          check, flags concerns, recommends actions, drafts a supplier claim.
+                          It can only escalate ACCEPT -> UNCERTAIN, never relax a verdict.
+                                                   ▼
                           evidence record (photo SHA-256s, PO/catalogue snapshot, raw observations,
                           verdicts, record SHA-256) saved under data/inspections/<id>/
 ```
 
 The split is deliberate: the model only **reports what it sees**; it never decides pass/fail.
 Decisions are made by transparent, testable rules in `receiving_manager/engine.py`.
+
+### Definitions
+
+| Verdict (per check) | Meaning |
+|---|---|
+| PASS | Photo-cited, confident evidence positively proves the check |
+| FAIL | Photo-cited, confident evidence positively proves a discrepancy |
+| UNCERTAIN | Evidence is missing, low-confidence, partial or contradictory; never guessed |
+| NOT_APPLICABLE | Nothing to check (e.g. no components defined) |
+
+| Decision (shipment) | Meaning |
+|---|---|
+| ACCEPT | Every applicable check passed |
+| EXCEPTION | At least one check failed: raise a supplier claim with the evidence record |
+| UNCERTAIN | No failures, but at least one check could not be verified: manual review |
+
+Served at `GET /api/definitions` and shown in the UI ("How decisions work").
+
+### Credit guard
+
+Every model call goes through `receiving_manager/llm.py`: it checks the OpenRouter key's remaining
+credit (`/auth/key`) and refuses calls that would drop it below `RM_MIN_CREDIT_USD` or push the
+server session past `RM_MAX_SPEND_USD`; output tokens are capped; identical requests are served
+from a local cache for $0. Live spend is shown in the UI header and at `GET /api/budget`.
 
 ### Guarding against forced or invented conclusions
 
@@ -94,14 +122,24 @@ API:
 | GET | `/api/inspections/{id}/verify` | recompute record hash |
 | GET | `/api/inspections/{id}/photos/{photo_id}` | stored photo |
 | GET | `/api/scenarios` | bundled scenarios + catalogue |
+| GET | `/api/scenarios/{name}/photos/{photo_id}` | synthetic sample photo |
+| GET | `/api/benchmark` | run every scenario through the rules (no model cost) |
+| GET | `/api/definitions` | verdict / decision / check definitions |
+| GET | `/api/budget` | key credit, session spend, cache hits |
+
+`POST /api/inspections` also accepts `ai_review=false` to skip the reasoning review.
 
 ## Test scenarios
 
 `scenarios/*.json` cover: correct shipment, short shipment, extra units, wrong SKU, wrong variant,
 crushed carton, water-damaged carton, torn packaging, missing components, ambiguous evidence, the
-example from the brief, and observations citing non-existent photos. Each file contains the PO,
-the observations and the expected decision/verdicts. Scenario photos are placeholders; the
-observations stand in for the vision model's output so the rules can be tested deterministically.
+example from the brief, observations citing non-existent photos, sealed cartons, mixed SKUs, a
+missing carton, pack-size mismatch, partial photo coverage, a low-confidence water mark, partial
+counts (over and short), product-name-only identity, multiple defects, a punctured product and a
+complete multi-component kit (24 total). Each file contains the PO, the observations and the
+expected decision/verdicts; the observations stand in for the vision model's output so the rules
+are tested deterministically. `scenarios/photos/` holds synthetic sample photos rendered from the
+observations by `scripts/generate_sample_photos.py` (usable for live vision runs too).
 
 ```bash
 pytest && ruff check . && ruff format --check .

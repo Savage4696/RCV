@@ -12,7 +12,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest==8.3.3", "ruff==0.6.9"]
+dev = ["pytest==8.3.3", "ruff==0.6.9", "pillow==12.3.0"]
 
 [project.scripts]
 receiving-manager = "receiving_manager.cli:main"

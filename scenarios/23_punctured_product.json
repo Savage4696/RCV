@@ -1,0 +1,147 @@
+{
+  "title": "Punctured product",
+  "description": "One bottle has been pierced through the wall.",
+  "purchase_order": {
+    "po_number": "PO-1001",
+    "supplier": "Acme Drinkware Ltd",
+    "lines": [
+      {
+        "sku": "BLUE-BOTTLE-001",
+        "expected_quantity": 24,
+        "variant": {
+          "color": "blue"
+        }
+      }
+    ]
+  },
+  "photos": [
+    "P1",
+    "P2",
+    "P3"
+  ],
+  "observations": {
+    "photos": [
+      {
+        "photo_id": "P1",
+        "usable": true,
+        "shows": [
+          "pallet overview",
+          "carton exteriors"
+        ]
+      },
+      {
+        "photo_id": "P2",
+        "usable": true,
+        "shows": [
+          "carton label close-up"
+        ]
+      },
+      {
+        "photo_id": "P3",
+        "usable": true,
+        "shows": [
+          "opened cartons, all units laid out"
+        ]
+      }
+    ],
+    "identifiers": [
+      {
+        "kind": "sku",
+        "value": "BLUE-BOTTLE-001",
+        "photo_ids": [
+          "P2"
+        ],
+        "confidence": 0.95
+      },
+      {
+        "kind": "barcode",
+        "value": "012345678905",
+        "photo_ids": [
+          "P2"
+        ],
+        "confidence": 0.9
+      }
+    ],
+    "variant": {
+      "attributes": {
+        "color": "blue"
+      },
+      "photo_ids": [
+        "P3"
+      ],
+      "confidence": 0.93
+    },
+    "units": {
+      "count": 24,
+      "all_visible": true,
+      "photo_ids": [
+        "P3"
+      ],
+      "confidence": 0.92
+    },
+    "cartons": {
+      "count": {
+        "count": 2,
+        "all_visible": true,
+        "photo_ids": [
+          "P1"
+        ],
+        "confidence": 0.95
+      },
+      "units_per_carton_label": 12,
+      "units_per_carton_label_photo_ids": [
+        "P2"
+      ],
+      "units_per_carton_label_confidence": 0.9,
+      "sealed": false
+    },
+    "damage": [
+      {
+        "type": "puncture",
+        "target": "product",
+        "description": "Bottle wall dented and punctured (forklift tine)",
+        "severity": "severe",
+        "photo_ids": [
+          "P3"
+        ],
+        "confidence": 0.9
+      }
+    ],
+    "damage_coverage": "full",
+    "components": [
+      {
+        "name": "bottle",
+        "present": true,
+        "photo_ids": [
+          "P3"
+        ],
+        "confidence": 0.92
+      },
+      {
+        "name": "lid",
+        "present": true,
+        "photo_ids": [
+          "P3"
+        ],
+        "confidence": 0.9
+      }
+    ],
+    "other_issues": []
+  },
+  "expected": {
+    "decision": "EXCEPTION",
+    "checks": {
+      "sku_identity": "PASS",
+      "variant": "PASS",
+      "quantity": "PASS",
+      "carton_count": "PASS",
+      "units_per_carton": "PASS",
+      "damage": "FAIL",
+      "components": "PASS",
+      "other_quality": "PASS"
+    },
+    "issue_codes": [
+      "PUNCTURED"
+    ]
+  }
+}

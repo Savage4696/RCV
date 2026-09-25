@@ -126,3 +126,41 @@ def test_scenarios_endpoint(api):
 def test_parse_observations_extracts_json_from_text():
     obs = parse_observations('Here you go:\n```json\n{"damage_coverage": "partial"}\n```')
     assert isinstance(obs, Observations) and obs.damage_coverage == "partial"
+
+
+def test_benchmark_definitions_and_sample_photos(api):
+    _, client = api
+    bench = client.get("/api/benchmark").json()
+    assert bench["total"] >= 20 and bench["passed"] == bench["total"]
+    defs = client.get("/api/definitions").json()
+    assert set(defs["verdicts"]) == {"PASS", "FAIL", "UNCERTAIN", "NOT_APPLICABLE"}
+    assert set(defs["decisions"]) == {"ACCEPT", "EXCEPTION", "UNCERTAIN"}
+    photo = client.get("/api/scenarios/01_correct_shipment/photos/P1")
+    assert photo.status_code == 200 and photo.content.startswith(b"\x89PNG")
+    assert client.get("/api/scenarios/01_correct_shipment/photos/..%2F..%2Fx").status_code == 404
+    assert client.get("/api/budget").json()["session_spent_usd"] == 0
+
+
+def test_reviewer_failure_is_a_warning_not_a_crash(api):
+    module, client = api
+    from receiving_manager.reasoning import ReasoningError
+
+    class Broken:
+        model = "broken"
+
+        def review(self, *args):
+            raise ReasoningError("boom")
+
+    module.reviewer = Broken()
+    s = SCENARIOS["01_correct_shipment"]
+    record = client.post(
+        "/api/inspections",
+        data={
+            "purchase_order": s.purchase_order.model_dump_json(),
+            "catalog": CATALOG_JSON,
+            "observations": s.observations.model_dump_json(),
+        },
+        files=photos(3),
+    ).json()
+    assert record["report"]["decision"] == "ACCEPT" and record["ai_review"] is None
+    assert any("Reasoning review unavailable" in w for w in record["report"]["warnings"])

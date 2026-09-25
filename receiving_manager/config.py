@@ -14,6 +14,11 @@ class Settings:
     anthropic_model: str
     confidence_threshold: float
     data_dir: Path
+    reasoning_model: str
+    reasoning_effort: str
+    reasoning_enabled: bool
+    min_credit_usd: float
+    max_spend_usd: float
 
 
 def load_settings() -> Settings:
@@ -39,4 +44,9 @@ def load_settings() -> Settings:
         anthropic_model=os.environ.get("RM_ANTHROPIC_MODEL", "claude-3-5-sonnet-latest"),
         confidence_threshold=float(os.environ.get("RM_CONFIDENCE_THRESHOLD", "0.7")),
         data_dir=Path(os.environ.get("RM_DATA_DIR", "data")),
+        reasoning_model=os.environ.get("RM_REASONING_MODEL", "openai/gpt-5-mini"),
+        reasoning_effort=os.environ.get("RM_REASONING_EFFORT", "medium"),
+        reasoning_enabled=os.environ.get("RM_REASONING", "on").lower() not in ("0", "off", "false"),
+        min_credit_usd=float(os.environ.get("RM_MIN_CREDIT_USD", "0.25")),
+        max_spend_usd=float(os.environ.get("RM_MAX_SPEND_USD", "1.00")),
     )

@@ -1,7 +1,6 @@
 import base64
 
-import httpx
-
+from ..llm import ChatResult, CreditBudget, LLMError, ResponseCache, chat_completion
 from ..models import CatalogItem, Observations, POLine
 from .base import ImagePayload, VisionError, VisionProvider, parse_observations
 from .prompt import build_system_prompt, build_user_prompt
@@ -17,12 +16,19 @@ class OpenAIProvider(VisionProvider):
         timeout: float = 120,
         base_url: str = "https://api.openai.com/v1",
         label: str = "openai",
+        budget: CreditBudget | None = None,
+        cache: ResponseCache | None = None,
+        max_tokens: int = 2500,
     ):
         self.api_key = api_key
         self.model = model
         self.name = f"{label}:{model}"
         self.timeout = timeout
         self.base_url = base_url.rstrip("/")
+        self.budget = budget
+        self.cache = cache
+        self.max_tokens = max_tokens
+        self.last_call: ChatResult | None = None
 
     def observe(
         self, line: POLine, catalog_item: CatalogItem | None, images: list[ImagePayload]
@@ -45,6 +51,7 @@ class OpenAIProvider(VisionProvider):
         body = {
             "model": self.model,
             "temperature": 0,
+            "max_tokens": self.max_tokens,
             "response_format": {"type": "json_object"},
             "messages": [
                 {"role": "system", "content": build_system_prompt()},
@@ -52,17 +59,15 @@ class OpenAIProvider(VisionProvider):
             ],
         }
         try:
-            resp = httpx.post(
-                f"{self.base_url}/chat/completions",
-                headers={"Authorization": f"Bearer {self.api_key}"},
-                json=body,
+            self.last_call = chat_completion(
+                self.base_url,
+                self.api_key,
+                body,
                 timeout=self.timeout,
+                budget=self.budget,
+                cache=self.cache,
+                estimate_usd=0.01 + 0.006 * len(images),
             )
-            resp.raise_for_status()
-        except httpx.HTTPError as exc:
-            raise VisionError(f"{self.name} request failed: {exc}") from exc
-        try:
-            text = resp.json()["choices"][0]["message"]["content"]
-        except (KeyError, IndexError, TypeError, ValueError) as exc:
-            raise VisionError(f"{self.name} returned an unexpected response") from exc
-        return parse_observations(text or "")
+        except LLMError as exc:
+            raise VisionError(f"{self.name}: {exc}") from exc
+        return parse_observations(self.last_call.text)

@@ -3,7 +3,8 @@ from dataclasses import dataclass
 
 from .engine import find_line, inspect, normalize_id
 from .evidence import EvidenceStore, seal
-from .models import CatalogItem, EvidenceRecord, Observations, PurchaseOrder
+from .models import AIReview, CatalogItem, EvidenceRecord, Observations, PurchaseOrder
+from .reasoning import ReasoningError, ReasoningReviewer, apply_review
 from .vision import ImagePayload, VisionError, VisionProvider
 
 
@@ -23,6 +24,7 @@ def run_inspection(
     threshold: float,
     sku: str | None = None,
     observations: Observations | None = None,
+    reviewer: ReasoningReviewer | None = None,
 ) -> EvidenceRecord:
     """Run an inspection.
 
@@ -38,6 +40,7 @@ def run_inspection(
     ]
     catalog_item = next((c for c in catalog if normalize_id(c.sku) == normalize_id(line.sku)), None)
     extra_warnings: list[str] = []
+    llm_cost = 0.0
     if observations is not None:
         source = "precomputed"
     elif provider is None:
@@ -56,12 +59,17 @@ def run_inspection(
         try:
             observations = provider.observe(line, catalog_item, images)
             source = provider.name
+            last_call = provider.last_call
+            if last_call is not None:
+                llm_cost += last_call.cost_usd
+                if last_call.cached:
+                    source += " (cached)"
         except VisionError as exc:
             observations = Observations()
             source = f"{provider.name} (failed)"
             extra_warnings.append(str(exc))
 
-    report, _ = inspect(
+    report, clean = inspect(
         po,
         catalog,
         photos,
@@ -71,6 +79,16 @@ def run_inspection(
         inspection_id=inspection_id,
     )
     report.warnings = extra_warnings + report.warnings
+    review: AIReview | None = None
+    if reviewer is not None:
+        try:
+            review = reviewer.review(
+                report, line, catalog_item, clean, [p.photo_id for p in photos]
+            )
+            llm_cost += review.cost_usd
+            apply_review(report, review)
+        except ReasoningError as exc:
+            report.warnings.append(f"Reasoning review unavailable: {exc}")
     record = seal(
         EvidenceRecord(
             report=report,
@@ -80,6 +98,8 @@ def run_inspection(
             photos=photos,
             observations=observations,
             observation_source=source,
+            ai_review=review,
+            llm_cost_usd=round(llm_cost, 6),
         )
     )
     store.save_record(record)
